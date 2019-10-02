@@ -1,6 +1,6 @@
 pipeline {
 
-    agent { docker { image 'bigtruedata/sbt' } }
+    agent { docker { image 'instructure/scala-sbt:1.2' } }
 
     stages {
 
