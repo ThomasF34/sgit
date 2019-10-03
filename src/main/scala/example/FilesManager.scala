@@ -1,5 +1,6 @@
 package example
 import java.io.File
+import scala.annotation.tailrec
 
 object FilesIO {
   def createDirectories(dirs : Array[String]) = {
@@ -19,7 +20,8 @@ object FilesIO {
   /**
    * Returns true if the given in the parents dir. Searches until reaching root dir
    */
-  def parentDirExists(dir: String, current: File = new File(".")) : Boolean = {
+  @tailrec
+  def parentDirExists(dir: String, current: File = new File(".")) : Boolean  = {
     val currentCanonical = current.getCanonicalFile()
     if(currentCanonical.getParentFile() == null) return dirExists(dir, currentCanonical)
     else {

@@ -1,7 +1,8 @@
 package example
 
-object Hello extends Greeting with App {
-  val action: String = "init";
+object Hello{
+  val repo: Repo = new Repo()
+  val action: String = "init"
 
   action match {
     case "init" => {
@@ -10,10 +11,10 @@ object Hello extends Greeting with App {
         case None => println("Repo initialized")
       }
     }
-    case _ => println("Usage wesh")
+    case _ => {
+      //repo = new Repo().searchRepoDir()
+      println("Usage wesh")
+    }
   }
 }
 
-trait Greeting {
-  lazy val greeting: String = "hello"
-}

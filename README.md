@@ -11,7 +11,7 @@ Git-like CLI in scala
 - [ ] diff :warning:
 - [ ] log
 - [ ] log p
-- [ ] log stats
+- [ ] log stat
 - [ ] branch 
 - [ ] branch av
 - [ ] tag
