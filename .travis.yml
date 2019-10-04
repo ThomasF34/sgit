@@ -22,11 +22,3 @@ jobs:
     script:
     - sonar-scanner -D sonar.host.url=$SONAR_HOST_URL -D sonar.login=$SONAR_TOKEN
       -X
-
-notifications:
-  slack:
-    secure: mOxqhIL7YHVNgBrUTcJ/Ct4jH14tWP/i9oUJIcFpenB7lJTM5K/4N+DwGgBW/9j51Y2Idt+vCihqAVb/SklnNoYaBnmWU1+V5IJXY8myq8g86QrkgX77SxaufNYyeV7zgdv6pMZU1roywPb6+ELlYQDiRdcGf0ct//7l/8UeOfnxeH1qvSQiHQj8dKoaLzLZQ8TLUXm8+hQkiIGaUpmLKQFR+CsRuXfK9uf5UgGjEpa5aeie+N/Lt/SBPkl2FUYb03pAWbeA2MZpLiqPXrG6MhfCGY/Hv/OCPaTJ1ouHP69Z9H3QnJCOxRkPmzqlNw+Jm+7FZ6PT238b/YFgnTWXMsHoclL7LOzv8lYCRFmB6PDv7iUv1sRy1LlhUJzOmE+uU/omUz5U29dUz01FKu4wqMgUtlWQluEAj9jr5kjEeJV9Po1XrlDXb5HKr4xQYNWWZKAaLHwxIMaQdbgHF4V9d0q9WQL7oqoy3f3ZzhXrMbBAWj3b0FigD+2sL0VPrfb4Q65CmbDTkDYtAf9nyPFghXlqHAQzVbLwBal7ISh5cLZDfjKTlNVU2dw5bdbW0MuvVeKlTgxRSgvuezEbbrBFJCsMK1ZWiDySkbFh92UaZOAwldpgnm0OfvNHlS/kvEXg1RWMGCKM58NgKEPVEMYjqLJP4gkYYt0TQT5vU9oUmCE=
-    on_success: change
-    on_failure: always
-    on_cancel:  always
-    on_error: always

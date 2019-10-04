@@ -69,11 +69,19 @@ object Parser extends App {
           opt[Unit]('a', "all")
             .action((_, c) => c.copy(displayAll = true))
             .text("display all branches"),
-          // TODO must validate "do not make sense with a branch name"
           opt[Unit]('v', "verbose")
             .action((_, c) => c.copy(verbose = true))
-            .text("show hash and commit subject line for each branch's head")
-          // TODO must validate "do not make sense with a branch name"
+            .text("show hash and commit subject line for each branch's head"),
+          checkConfig(
+            c =>
+              if (c.displayAll && c.givenName != "")
+                failure("'all' option does not make sense with a branch name")
+              else if (c.verbose && c.givenName != "")
+                failure(
+                  "'verbose' option does not make sense with a branch name"
+                )
+              else success
+          )
         )
     )
   }
