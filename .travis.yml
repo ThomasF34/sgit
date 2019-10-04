@@ -1,0 +1,32 @@
+language: scala
+jdk: openjdk8
+scala:
+- 2.13.0
+addons:
+  sonarcloud: true
+
+env:
+  global:
+  - SONAR_HOST_URL=http://185.216.27.102:9000
+  - secure: kgm69FVnDjT3K+liGY4eziaN5FKE59Up5UNE3khl3bzEtH9F7s3pKyMpi6U7AtuzySD+NmkF88yj0i7m422EyLDgAfFRvOKrfh7n6FH0UGA1VkPNgeeRTM78KYcDrDosoncGa5ZN4NdodqvMhTj4f4OFxSkMxPQdT4yuAb5gaxHOkKBUlHEbSnmAY1jP2OzjOtoP/aWbOPRNRoGSZCWJj1akkc1qbcZMtiodUULN0TBUE5VX6CinfR7a/Vi+upllfq7yMFcy49C7JnA1P2UJN/PACcDEw68wD5IyMr0QTeO9h3fltjh8kzV7MHAmOmcl4g5qC0FuzCtYELPIvvzmJYIxSAr4pTsbGXyC8FNIEBwI4FQ0Xl0PJhn6JpCDqD7HGtfm3YuPzGif7GLHID4YS7EBWJKxH/Km3hgY7oFmR0qaFYhQRGcvpgko7lFShcprsXlcfjz3kbQnHm1a6en05ByvymxVWFbJViM+5BmVkhbkuL+SVhwiDzzou90jRlnKTZgw1JYacQCDxt65i9dKTQCk9fMquFy67zOsH8898CyaxjG9GeQU/lK9pgHTjuQtmb22ZLwSf9PaXjW8RSTDZeinbqrkx8YQ/9l5cHdhf49LUwNqfdFwjLWpTm1jwDtMSdwo0/kSGTi8pAZeMEXP68xtT2ETzNItkIM8AqIQ8Mg=
+
+jobs:
+  include:
+  - stage: test
+    script:
+    - sbt test
+  - stage: lint
+    script:
+    - sbt scalafmtCheckAll
+  - stage: sonarqube
+    script:
+    - sonar-scanner -D sonar.host.url=$SONAR_HOST_URL -D sonar.login=$SONAR_TOKEN
+      -X
+
+notifications:
+  slack:
+    secure: mOxqhIL7YHVNgBrUTcJ/Ct4jH14tWP/i9oUJIcFpenB7lJTM5K/4N+DwGgBW/9j51Y2Idt+vCihqAVb/SklnNoYaBnmWU1+V5IJXY8myq8g86QrkgX77SxaufNYyeV7zgdv6pMZU1roywPb6+ELlYQDiRdcGf0ct//7l/8UeOfnxeH1qvSQiHQj8dKoaLzLZQ8TLUXm8+hQkiIGaUpmLKQFR+CsRuXfK9uf5UgGjEpa5aeie+N/Lt/SBPkl2FUYb03pAWbeA2MZpLiqPXrG6MhfCGY/Hv/OCPaTJ1ouHP69Z9H3QnJCOxRkPmzqlNw+Jm+7FZ6PT238b/YFgnTWXMsHoclL7LOzv8lYCRFmB6PDv7iUv1sRy1LlhUJzOmE+uU/omUz5U29dUz01FKu4wqMgUtlWQluEAj9jr5kjEeJV9Po1XrlDXb5HKr4xQYNWWZKAaLHwxIMaQdbgHF4V9d0q9WQL7oqoy3f3ZzhXrMbBAWj3b0FigD+2sL0VPrfb4Q65CmbDTkDYtAf9nyPFghXlqHAQzVbLwBal7ISh5cLZDfjKTlNVU2dw5bdbW0MuvVeKlTgxRSgvuezEbbrBFJCsMK1ZWiDySkbFh92UaZOAwldpgnm0OfvNHlS/kvEXg1RWMGCKM58NgKEPVEMYjqLJP4gkYYt0TQT5vU9oUmCE=
+    on_success: change
+    on_failure: always
+    on_cancel:  always
+    on_error: always

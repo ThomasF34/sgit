@@ -1,6 +1,6 @@
 package example
 
-object Hello{
+object Hello {
   val repo: Repo = new Repo()
   val action: String = "init"
 
@@ -8,7 +8,7 @@ object Hello{
     case "init" => {
       new Repo().init() match {
         case Some(s) => println(s)
-        case None => println("Repo initialized")
+        case None    => println("Repo initialized")
       }
     }
     case _ => {
@@ -17,4 +17,3 @@ object Hello{
     }
   }
 }
-
