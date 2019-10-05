@@ -1,4 +1,4 @@
-package example
+package igpolytech
 import java.io.File
 import scala.annotation.tailrec
 
@@ -31,5 +31,13 @@ object FilesIO {
       if (dirExists(dir, currentCanonical)) return true
       else return parentDirExists(dir, currentCanonical.getParentFile())
     }
+  }
+
+  def delete(path: String) {
+    val file = new File(path)
+    if (file.isDirectory()) {
+      file.listFiles().foreach(_.delete())
+    }
+    file.delete()
   }
 }

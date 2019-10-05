@@ -1,10 +1,10 @@
-# SGIT 
+# SGIT
 
-Git-like CLI in scala 
+Git-like CLI in scala
 
---- 
+---
 
-- [ ] init
+- [x] init
 - [ ] status
 - [ ] add
 - [ ] commit
@@ -12,7 +12,7 @@ Git-like CLI in scala
 - [ ] log
 - [ ] log p
 - [ ] log stat
-- [ ] branch 
+- [ ] branch
 - [ ] branch av
 - [ ] tag
 - [ ] checkout

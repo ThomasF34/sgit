@@ -1,9 +1,10 @@
-package example
+package igpolytech
 import java.io.File
 import scopt.OParser
 
 case class Config(
     mode: String = "",
+    path: String = ".",
     files: Seq[File] = Seq(),
     patch: Boolean = false,
     stats: Boolean = false,
@@ -23,7 +24,14 @@ object Parser extends App {
         .text("Here is the usage of sgit"),
       cmd("init")
         .action((_, c) => c.copy(mode = "init"))
-        .text("creates a new sgit repository in the current directory"),
+        .text(
+          "creates a new sgit repository in the current directory or in the given path if any"
+        )
+        .children(
+          arg[String]("<path>")
+            .optional()
+            .action((x, c) => c.copy(path = x))
+        ),
       cmd("add")
         .action((_, c) => c.copy(mode = "add"))
         .text("adds the given files to the stage")
@@ -88,8 +96,19 @@ object Parser extends App {
 
 // OParser.parse returns Option[Config]
   OParser.parse(parser1, args, Config()) match {
-    case Some(config) => println(config.mode)
-    // do something
+    case Some(config) => {
+      val repo: Repo = new Repo()
+
+      config.mode match {
+        case "init" => {
+          println(new Repo().init(config.path))
+        }
+        case _ => {
+          //repo = new Repo().searchRepoDir()
+          println("Usage wesh")
+        }
+      }
+    }
     case _ =>
     // arguments are bad, error message will have been displayed
   }
