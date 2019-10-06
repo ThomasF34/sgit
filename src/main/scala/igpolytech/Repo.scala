@@ -2,6 +2,7 @@ package igpolytech
 import java.io.File
 
 class Repo {
+
   def init(path: String): String = {
     val sgitDir = s"${path}${File.separator}.sgit${File.separator}"
     val dirs: Array[String] = Array(
@@ -23,5 +24,9 @@ class Repo {
     } else {
       "Sorry, a sgit repository is already initialized";
     }
+  }
+
+  def getRepoDir(): Option[String] = {
+    return FilesIO.getRepoDirPath(".sgit")
   }
 }

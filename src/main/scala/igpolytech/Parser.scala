@@ -90,22 +90,54 @@ object Parser extends App {
                 )
               else success
           )
-        )
+        ),
+      cmd("tag")
+        .action((_, c) => c.copy(mode = "tag"))
+        .text("TODO"),
+      cmd("checkout")
+        .action((_, c) => c.copy(mode = "checkout"))
+        .text("TODO"),
+      cmd("merge")
+        .action((_, c) => c.copy(mode = "merge"))
+        .text("TODO"),
+      cmd("rebase")
+        .action((_, c) => c.copy(mode = "rebase"))
+        .text("TODO")
     )
   }
 
 // OParser.parse returns Option[Config]
   OParser.parse(parser1, args, Config()) match {
     case Some(config) => {
-      val repo: Repo = new Repo()
 
       config.mode match {
         case "init" => {
           println(new Repo().init(config.path))
         }
         case _ => {
-          //repo = new Repo().searchRepoDir()
-          println("Usage wesh")
+          new Repo().getRepoDir() match {
+            case None => {
+              println(
+                "fatal: not a sgit repository (or any of the parent directories): .sgit"
+              )
+              System.exit(1)
+            }
+            case Some(value) => {
+              val repoDir: File = new File(value)
+              config.mode match {
+                case "add"      => println("Not yet implemented")
+                case "commit"   => println("Not yet implemented")
+                case "branch"   => println("Not yet implemented")
+                case "log"      => println("Not yet implemented")
+                case "diff"     => println("Not yet implemented")
+                case "tag"      => println("Not yet implemented")
+                case "status"   => println("Not yet implemented")
+                case "merge"    => println("Not yet implemented")
+                case "rebase"   => println("Not yet implemented")
+                case "checkout" => println("Not yet implemented")
+              }
+            }
+          }
         }
       }
     }
