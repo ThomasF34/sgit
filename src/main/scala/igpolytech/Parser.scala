@@ -112,10 +112,10 @@ object Parser extends App {
 
       config.mode match {
         case "init" => {
-          println(new Repo().init(config.path))
+          println(Repo.init(config.path))
         }
         case _ => {
-          new Repo().getRepoDir() match {
+          Repo.getRepoDir() match {
             case None => {
               println(
                 "fatal: not a sgit repository (or any of the parent directories): .sgit"
@@ -123,7 +123,7 @@ object Parser extends App {
               System.exit(1)
             }
             case Some(value) => {
-              val repoDir: File = new File(value)
+              val repo: Repo = new Repo(value)
               config.mode match {
                 case "add"      => println("Not yet implemented")
                 case "commit"   => println("Not yet implemented")
@@ -131,7 +131,7 @@ object Parser extends App {
                 case "log"      => println("Not yet implemented")
                 case "diff"     => println("Not yet implemented")
                 case "tag"      => println("Not yet implemented")
-                case "status"   => println("Not yet implemented")
+                case "status"   => println(repo.getStatus())
                 case "merge"    => println("Not yet implemented")
                 case "rebase"   => println("Not yet implemented")
                 case "checkout" => println("Not yet implemented")

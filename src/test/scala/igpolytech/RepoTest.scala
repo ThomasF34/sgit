@@ -16,7 +16,7 @@ class RepoTest extends FunSpec {
   describe("Repo") {
     describe("Init") {
       it("should create dirs and files after init") {
-        val res = new Repo().init(".")
+        val res = Repo.init(".")
         assert(res == "Repo initialized")
         assert(new File(".sgit/STAGE").exists())
         assert(new File(".sgit/HEAD").exists())
@@ -29,7 +29,7 @@ class RepoTest extends FunSpec {
 
       it("should be initialized in a given path") {
         new File("./test").mkdir()
-        val res = new Repo().init("./test")
+        val res = Repo.init("./test")
         assert(res == "Repo initialized")
         assert(new File("test/.sgit/STAGE").exists())
         assert(new File("test/.sgit/HEAD").exists())
@@ -41,8 +41,8 @@ class RepoTest extends FunSpec {
       }
 
       it("shouldn't be initialized if already exists in current directory") {
-        new Repo().init(".")
-        val res = new Repo().init(".")
+        Repo.init(".")
+        val res = Repo.init(".")
         assert(res == "Sorry, a sgit repository is already initialized")
       }
     }
