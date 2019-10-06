@@ -12,7 +12,7 @@ class Repo {
       s"${sgitDir}branches"
     )
     val files: Array[String] = Array(s"${sgitDir}STAGE", s"${sgitDir}HEAD");
-    if (!FilesIO.dirExists(sgitDir) && !FilesIO.parentDirExists(sgitDir)) {
+    if (!FilesIO.dirExists(sgitDir)) {
       try {
         FilesIO.createDirectories(dirs);
         FilesIO.createFiles(files);

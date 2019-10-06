@@ -4,11 +4,11 @@ import scala.annotation.tailrec
 
 object FilesIO {
   def createDirectories(dirs: Array[String]) = {
-    dirs.map(dir => new File(dir).mkdirs());
+    dirs.foreach(dir => new File(dir).mkdirs());
   }
 
   def createFiles(paths: Array[String]) = {
-    paths.map(path => new File(path).createNewFile())
+    paths.foreach(path => new File(path).createNewFile())
   }
 
   /**
@@ -20,23 +20,27 @@ object FilesIO {
       .isDirectory()
 
   /**
-    * Returns true if the given in the parents dir. Searches until reaching root dir
+    * Searchs recursively for the repo dir until reaching the root dir
+    * Returns the path of the repo dir or $none if not found
     */
   @tailrec
-  def parentDirExists(dir: String, current: File = new File(".")): Boolean = {
+  def getRepoDirPath(
+      repoDir: String,
+      current: File = new File(".")
+  ): Option[String] = {
     val currentCanonical = current.getCanonicalFile()
-    if (currentCanonical.getParentFile() == null)
-      return dirExists(dir, currentCanonical)
+    if (dirExists(repoDir, currentCanonical))
+      Some(s"${currentCanonical.getAbsolutePath()}${File.separator}${repoDir}")
     else {
-      if (dirExists(dir, currentCanonical)) return true
-      else return parentDirExists(dir, currentCanonical.getParentFile())
+      if (currentCanonical.getParentFile() == null) None
+      else getRepoDirPath(repoDir, currentCanonical.getParentFile())
     }
   }
 
-  def delete(path: String) {
+  def delete(path: String): Unit = {
     val file = new File(path)
     if (file.isDirectory()) {
-      file.listFiles().foreach(_.delete())
+      file.listFiles().foreach(f => delete(f.getCanonicalPath()))
     }
     file.delete()
   }
