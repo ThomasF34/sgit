@@ -21,7 +21,8 @@ class Repo(repoDir: String) {
       case Some(commit) => allFiles.diff(commit.tree.getAllFiles())
     }
 
-    files.mkString("\n")
+    if (files.isEmpty) "-- Nothing is untracked --"
+    else files.mkString("\n")
   }
 
   def allFiles: Array[String] =
