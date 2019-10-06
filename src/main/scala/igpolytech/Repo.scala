@@ -11,7 +11,17 @@ class Repo(repoDir: String) {
     hash.map(value => Commit.getCommit(value))
   }
 
-  def _getStaggedStatus(): String = "Not yet implemented"
+  def _getStaggedStatus(): String = {
+    val hash = FilesIO.getHash(s"${repoDir}${File.separator}STAGE")
+    hash match {
+      case None => "-- Nothing in stage --"
+      case Some(treeHash) => {
+        val tree: Tree = Tree.getTree(treeHash)
+        tree.getAllFiles().mkString("\n")
+      }
+    }
+    //value => Tree.getTree(value))
+  }
 
   def _getModifiedStatus(): String = "Not yet implemented"
 

@@ -14,10 +14,21 @@ case class Tree(
   def getAllFiles(): Array[String] =
     trees.flatMap(
       tree => tree.getAllFiles().map(file => s"${name}${File.separator}$file")
-    ) ++ blobs.map(blob => s"${name}${blob.name}")
+    ) ++ blobs.map(blob => s"${name}${File.separator}${blob.name}")
 
   /**
     * Saves the tree in the tree folder
     */
   def save() = {}
+}
+
+object Tree {
+  def getTree(hash: String): Tree = {
+    new Tree(
+      hash,
+      "src",
+      Array(new Tree("que", "abc", Array(), Array(new Blob("blob2")))),
+      Array(new Blob("blob1"))
+    );
+  }
 }
