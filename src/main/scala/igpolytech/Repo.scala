@@ -20,7 +20,6 @@ class Repo(repoDir: String) {
         tree.getAllFiles().mkString("\n")
       }
     }
-    //value => Tree.getTree(value))
   }
 
   def _getModifiedStatus(): String = "Not yet implemented"
@@ -33,6 +32,27 @@ class Repo(repoDir: String) {
 
     if (files.isEmpty) "-- Nothing is untracked --"
     else files.mkString("\n")
+  }
+
+  def add(files: Array[String]): String = {
+    files
+      .map(
+        file =>
+          file match {
+            case ".sgit" | "./.sgit" => "I WILL NOT ADD .SGIT"
+            case "."                 => addFiles(".")
+            case path: String        => addFile(path)
+          }
+      )
+      .mkString("\n")
+  }
+
+  def addFile(path: String): String = {
+    s"Will add $path"
+  }
+
+  def addFiles(dirPath: String): String = {
+    s"Will add ${FilesIO.getAllFiles(dirPath).mkString(" - ")}"
   }
 
   def allFiles: Array[String] =

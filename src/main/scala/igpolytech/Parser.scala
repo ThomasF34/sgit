@@ -5,7 +5,7 @@ import scopt.OParser
 case class Config(
     mode: String = "",
     path: String = ".",
-    files: Seq[File] = Seq(),
+    files: Array[String] = Array(),
     patch: Boolean = false,
     stats: Boolean = false,
     givenName: String = "",
@@ -36,9 +36,9 @@ object Parser extends App {
         .action((_, c) => c.copy(mode = "add"))
         .text("adds the given files to the stage")
         .children(
-          arg[File]("<file>...")
+          arg[String]("<file>...")
             .unbounded()
-            .optional()
+            .required()
             .action((x, c) => c.copy(files = c.files :+ x))
             .text("file to add to stage")
         ),
@@ -125,7 +125,7 @@ object Parser extends App {
             case Some(value) => {
               val repo: Repo = new Repo(value)
               config.mode match {
-                case "add"      => println("Not yet implemented")
+                case "add"      => println(repo.add(config.files))
                 case "commit"   => println("Not yet implemented")
                 case "branch"   => println("Not yet implemented")
                 case "log"      => println("Not yet implemented")
