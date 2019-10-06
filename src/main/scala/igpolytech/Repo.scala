@@ -2,6 +2,9 @@ package igpolytech
 import java.io.File
 
 class Repo(repoDir: String) {
+  val projectDir = repoDir match {
+    case s"${value}/.sgit" => value
+  }
   def getStatus(): String = {
     s"# Stagged \n${_getStaggedStatus()} \n\n # Modified \n${_getModifiedStatus()} \n\n# Untracked \n${_getUntrackedStatus()}\n"
   }
@@ -35,16 +38,13 @@ class Repo(repoDir: String) {
   }
 
   def add(files: Array[String]): String = {
-    files
-      .map(
-        file =>
-          file match {
-            case ".sgit" | "./.sgit" => "I WILL NOT ADD .SGIT"
-            case "."                 => addFiles(".")
-            case path: String        => addFile(path)
-          }
-      )
-      .mkString("\n")
+    println(s"Repo numero $repoDir")
+    println(s"Project nume $projectDir")
+    val volatileTree: Tree = Tree.createFromList(
+      files.filterNot(_.contains(".sgit")),
+      projectDir
+    )
+    "Not yet implemented"
   }
 
   def addFile(path: String): String = {
