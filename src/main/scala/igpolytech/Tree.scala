@@ -34,15 +34,11 @@ object Tree {
 
   def createFromList(files: Array[String], projectDir: String): Tree = {
     val explicitedFiles: Array[Array[String]] = files
-      .flatMap(f => {
-        val file = new File(f)
-        if (file.isDirectory()) file.listFiles();
-        else Array(file);
-      })
+      .flatMap(f => FilesIO.getAllFiles(new File(f)))
       .map(file => {
         file
           .getCanonicalPath()
-          .replace(s"$projectDir/", "")
+          .replace(s"$projectDir", "")
           .split(File.separator)
       })
 
@@ -55,7 +51,7 @@ object Tree {
     * and each element represent a dir. The last element is the name of the file to add.
     */
   def _createTree(files: Array[Array[String]]): Tree = {
-    println(s"gonna create from ${files.map(_.mkString("->")).mkString("\n")}")
+    println(s"gonna create from ${files.map(_.mkString("/")).mkString("\n")}")
 
     // val (blobs, trees) =
     //   files.partition(pathAsArray => pathAsArray.length == 1)

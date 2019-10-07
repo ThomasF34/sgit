@@ -47,12 +47,12 @@ object FilesIO {
     else Some(line)
   }
 
-  def getAllFiles(pathDir: String): Array[String] = {
+  def getAllFilesPath(pathDir: String): Array[String] = {
     val file = new File(pathDir)
-    getAllFiles(file)
+    getAllFilesPath(file)
   }
 
-  def getAllFiles(dir: File, prefix: String = ""): Array[String] = {
+  def getAllFilesPath(dir: File, prefix: String = ""): Array[String] = {
     val (files, dirs) = dir
       .listFiles()
       .filter(_.getName() != ".sgit")
@@ -65,10 +65,19 @@ object FilesIO {
         case value: String =>
           s"${value}${childDir.getName()}${File.separator}"
       }
-      getAllFiles(childDir, newPrefix)
+      getAllFilesPath(childDir, newPrefix)
     })
 
     currentFiles ++ childFiles
+  }
+
+  def getAllFiles(dir: File): Array[File] = {
+    if (dir.isFile()) Array(dir)
+    else
+      dir
+        .listFiles()
+        .filter(_.getName() != ".sgit")
+        .flatMap(getAllFiles(_))
   }
 
   def delete(path: String): Unit = {

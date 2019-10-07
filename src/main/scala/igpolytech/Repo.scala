@@ -3,7 +3,7 @@ import java.io.File
 
 class Repo(repoDir: String) {
   val projectDir = repoDir match {
-    case s"${value}/.sgit" => value
+    case s"${value}.sgit" => value
   }
   def getStatus(): String = {
     s"# Stagged \n${_getStaggedStatus()} \n\n # Modified \n${_getModifiedStatus()} \n\n# Untracked \n${_getUntrackedStatus()}\n"
@@ -52,11 +52,11 @@ class Repo(repoDir: String) {
   }
 
   def addFiles(dirPath: String): String = {
-    s"Will add ${FilesIO.getAllFiles(dirPath).mkString(" - ")}"
+    s"Will add ${FilesIO.getAllFilesPath(dirPath).mkString(" - ")}"
   }
 
   def allFiles: Array[String] =
-    FilesIO.getAllFiles(s"${repoDir}${File.separator}..")
+    FilesIO.getAllFilesPath(s"${repoDir}${File.separator}..")
 }
 
 object Repo {
