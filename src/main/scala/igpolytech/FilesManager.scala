@@ -3,6 +3,7 @@ import java.io.File
 import java.io.FileReader
 import scala.annotation.tailrec
 import java.io.BufferedReader
+import scala.xml.Node
 
 object FilesIO {
   def createDirectories(dirs: Array[String]) = {
@@ -86,5 +87,13 @@ object FilesIO {
       file.listFiles().foreach(f => delete(f.getCanonicalPath()))
     }
     file.delete()
+  }
+
+  def saveXml(content: Node, path: String) = {
+    scala.xml.XML.save(path, content);
+  }
+
+  def loadXml(path: String): Node = {
+    scala.xml.XML.loadFile(path)
   }
 }

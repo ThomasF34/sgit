@@ -38,22 +38,26 @@ class Repo(repoDir: String) {
   }
 
   def add(files: Array[String]): String = {
-    println(s"Repo numero $repoDir")
-    println(s"Project nume $projectDir")
     val volatileTree: Tree = Tree.createFromList(
       files.filterNot(_.contains(".sgit")),
       projectDir
     )
-    "Not yet implemented"
+
+    volatileTree.toString()
+
+    // If no stage -> volatile tree = stage (means no commit had been done)
+    // If stage -> merge volatile tree with stage tree
+    //WARNING WHEN COMMIT DO NOT RESET STAGE. WE WONT BE ABLE TO COMPARE WITH STAGE IF RESETED
+    getStage match {
+      case Some(stage) => setStage(stage.mergeTree(volatileTree))
+      case None        => setStage(volatileTree)
+    }
+    "Changes added"
   }
 
-  def addFile(path: String): String = {
-    s"Will add $path"
-  }
+  def getStage: Option[Tree] = Some(Tree.getTree("a"));
 
-  def addFiles(dirPath: String): String = {
-    s"Will add ${FilesIO.getAllFilesPath(dirPath).mkString(" - ")}"
-  }
+  def setStage(newStage: Tree) = {}
 
   def allFiles: Array[String] =
     FilesIO.getAllFilesPath(s"${repoDir}${File.separator}..")
