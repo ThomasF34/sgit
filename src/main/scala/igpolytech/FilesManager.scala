@@ -4,6 +4,10 @@ import java.io.FileReader
 import scala.annotation.tailrec
 import java.io.BufferedReader
 import scala.xml.Node
+import java.io.FileWriter
+import java.security.MessageDigest
+import scala.io.Source
+import scala.io.BufferedSource
 
 object FilesIO {
   def createDirectories(dirs: Array[String]) = {
@@ -89,11 +93,39 @@ object FilesIO {
     file.delete()
   }
 
+  def write(path: String, content: String) = {
+    val file = new File(path)
+    if (!file.exists()) {
+      file.createNewFile()
+    }
+
+    val writer = new FileWriter(file)
+    writer.write(content)
+    writer.close()
+  }
+
   def saveXml(content: Node, path: String) = {
     scala.xml.XML.save(path, content);
   }
 
   def loadXml(path: String): Node = {
     scala.xml.XML.loadFile(path)
+  }
+
+  def getContent(path: String): String = {
+    println(s"Get content has been called for $path")
+    val file = new File(path)
+    if (file.exists() && file.isFile()) {
+      println(s"Will return ${Source.fromFile(file).mkString}")
+      Source.fromFile(file).mkString
+    } else ""
+  }
+
+  def generateHash(forString: String): String = {
+    MessageDigest
+      .getInstance("SHA-1")
+      .digest(forString.getBytes("UTF-8"))
+      .map("%02x".format(_))
+      .mkString
   }
 }

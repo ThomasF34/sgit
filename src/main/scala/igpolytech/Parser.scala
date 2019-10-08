@@ -14,7 +14,6 @@ case class Config(
 )
 
 object Parser extends App {
-  Tree.getTree("abd").save("abscf")
   val builder = OParser.builder[Config]
   val parser1 = {
     import builder._

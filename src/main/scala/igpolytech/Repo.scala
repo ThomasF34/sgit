@@ -1,7 +1,7 @@
 package igpolytech
 import java.io.File
 
-class Repo(repoDir: String) {
+case class Repo(repoDir: String) {
   val projectDir = repoDir match {
     case s"${value}.sgit" => value
   }
@@ -19,7 +19,12 @@ class Repo(repoDir: String) {
     hash match {
       case None => "-- Nothing in stage --"
       case Some(treeHash) => {
-        val tree: Tree = Tree.getTree(treeHash)
+        val tree: Tree =
+          Tree.getTree(
+            s"${repoDir}${File.separator}trees${File.separator}",
+            s"${repoDir}${File.separator}blobs${File.separator}",
+            treeHash
+          )
         tree.getAllFiles().mkString("\n")
       }
     }
@@ -55,9 +60,25 @@ class Repo(repoDir: String) {
     "Changes added"
   }
 
-  def getStage: Option[Tree] = Some(Tree.getTree("a"));
+  def getStage: Option[Tree] = {
+    val stageHashOption = FilesIO.getHash(s"${repoDir}${File.separator}STAGE")
+    stageHashOption.map(
+      stageHash =>
+        Tree.getTree(
+          s"${repoDir}${File.separator}trees${File.separator}",
+          s"${repoDir}${File.separator}blobs${File.separator}",
+          stageHash
+        )
+    )
+  };
 
-  def setStage(newStage: Tree) = {}
+  def setStage(newStage: Tree) = {
+    newStage.save(
+      s"${repoDir}${File.separator}trees${File.separator}",
+      s"${repoDir}${File.separator}blobs${File.separator}"
+    )
+    FilesIO.write(s"${repoDir}${File.separator}STAGE", newStage.hash)
+  }
 
   def allFiles: Array[String] =
     FilesIO.getAllFilesPath(s"${repoDir}${File.separator}..")

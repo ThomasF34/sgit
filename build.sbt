@@ -17,6 +17,6 @@ lazy val root = (project in file("."))
 assemblyOption in assembly := (assemblyOption in assembly).value
   .copy(prependShellScript = Some(defaultUniversalScript(shebang = false)))
 
-assemblyJarName in assembly := s"${name.value}-${version.value}"
+assemblyJarName in assembly := s"${name.value}"
 
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for instructions on how to publish to Sonatype.
