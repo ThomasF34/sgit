@@ -47,24 +47,52 @@ class RepoTest extends FunSpec {
   }
 
   describe("Commit handling") {
-    it("should get commit from HEAD") {
-      pending
-    }
-
     it("shouldn't get commit from empty HEAD") {
-      pending
+      Repo.init(".")
+      val repo = Repo(".sgit")
+      FilesIO.write(s".sgit${File.separator}HEAD", "")
+      assert(repo.getLastCommit().isEmpty)
     }
 
     it("should get Tree from STAGE") {
-      pending
+      Repo.init(".")
+      val repo = Repo(".sgit")
+      val tree = Tree("A113")
+      tree.save(
+        repo.treesPath,
+        repo.blobsPath
+      )
+      FilesIO.write(s".sgit${File.separator}STAGE", tree.hash)
+
+      val stageTree = repo.getStage
+
+      assert(stageTree.isDefined)
+      assert(stageTree.get.equals(tree))
     }
 
     it("shouldn't get tree from empty STAGE") {
-      pending
+      Repo.init(".")
+      val repo = Repo(".sgit")
+
+      val stageTree = repo.getStage
+
+      assert(stageTree.isEmpty)
     }
 
     it("should set STAGE from a tree") {
-      pending
+      Repo.init(".")
+      val repo = Repo(".sgit")
+      val tree = Tree("A113")
+
+      repo.setStage(tree)
+
+      val hash = FilesIO.getHash(s".sgit${File.separator}STAGE")
+
+      assert(hash.isDefined)
+      assert(hash.get.equals(tree.hash))
+      assert(
+        Tree.getTree(repo.treesPath, repo.blobsPath, hash.get).equals(tree)
+      )
     }
   }
   describe("Stage handling") {

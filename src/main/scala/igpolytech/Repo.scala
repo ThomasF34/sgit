@@ -5,6 +5,10 @@ case class Repo(repoDir: String) {
   val projectDir = repoDir match {
     case s"${value}.sgit" => value
   }
+
+  val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
+  val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
+
   def getStatus(): String = {
     s"# Stagged \n${_getStaggedStatus()} \n\n # Modified \n${_getModifiedStatus()} \n\n# Untracked \n${_getUntrackedStatus()}\n"
   }
@@ -21,8 +25,8 @@ case class Repo(repoDir: String) {
       case Some(treeHash) => {
         val tree: Tree =
           Tree.getTree(
-            s"${repoDir}${File.separator}trees${File.separator}",
-            s"${repoDir}${File.separator}blobs${File.separator}",
+            treesPath,
+            blobsPath,
             treeHash
           )
         tree.getAllFiles().mkString("\n")
@@ -65,8 +69,8 @@ case class Repo(repoDir: String) {
     stageHashOption.map(
       stageHash =>
         Tree.getTree(
-          s"${repoDir}${File.separator}trees${File.separator}",
-          s"${repoDir}${File.separator}blobs${File.separator}",
+          treesPath,
+          blobsPath,
           stageHash
         )
     )
@@ -74,8 +78,8 @@ case class Repo(repoDir: String) {
 
   def setStage(newStage: Tree) = {
     newStage.save(
-      s"${repoDir}${File.separator}trees${File.separator}",
-      s"${repoDir}${File.separator}blobs${File.separator}"
+      treesPath,
+      blobsPath
     )
     FilesIO.write(s"${repoDir}${File.separator}STAGE", newStage.hash)
   }

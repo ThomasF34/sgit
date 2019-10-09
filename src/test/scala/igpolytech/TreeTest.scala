@@ -39,7 +39,20 @@ class TreeTest extends FunSpec with Matchers {
 
   describe("Tree merging") {
     it("should merge two trees") {
-      pending
+      val tree = new Tree("A113")
+      val blob = new Blob("unoBlobo", () => "Italian")
+      val blob2 = new Blob("duoBlobi", () => "Italian again")
+      val treeWithBlob = new Tree("A114", Array(tree), Array(blob))
+      val treeWithBlob2 = new Tree(
+        "A114",
+        Array(tree),
+        Array(blob2)
+      )
+
+      val mergedTree = treeWithBlob.mergeTree(treeWithBlob2)
+
+      val expectedTree = new Tree("A114", Array(tree), Array(blob, blob2))
+      assert(mergedTree.equals(expectedTree))
     }
   }
 
