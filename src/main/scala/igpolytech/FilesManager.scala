@@ -113,10 +113,8 @@ object FilesIO {
   }
 
   def getContent(path: String): String = {
-    println(s"Get content has been called for $path")
     val file = new File(path)
     if (file.exists() && file.isFile()) {
-      println(s"Will return ${Source.fromFile(file).mkString}")
       Source.fromFile(file).mkString
     } else ""
   }

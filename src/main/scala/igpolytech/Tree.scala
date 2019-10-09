@@ -1,6 +1,5 @@
 package igpolytech
 import java.io.File
-import java.io.FileWriter
 import scala.xml.Node
 
 case class Tree(
@@ -71,7 +70,6 @@ case class Tree(
 
 object Tree {
   def getTree(pathTreeDir: String, pathBlobDir: String, hash: String): Tree = {
-    println(s"Get tree called for $pathTreeDir with hash $hash")
     val xml = FilesIO.loadXml(s"${pathTreeDir}${hash}")
     getTree(pathTreeDir, pathBlobDir, xml)
   }

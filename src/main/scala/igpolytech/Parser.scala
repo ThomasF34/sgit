@@ -1,5 +1,4 @@
 package igpolytech
-import java.io.File
 import scopt.OParser
 
 case class Config(
