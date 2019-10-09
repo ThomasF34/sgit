@@ -10,7 +10,7 @@ case class Repo(repoDir: String) {
   val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
 
   def getStatus(): String = {
-    s"# Stagged \n${_getStaggedStatus()} \n\n # Modified \n${_getModifiedStatus()} \n\n# Untracked \n${_getUntrackedStatus()}\n"
+    s"# Stagged \n${getStaggedStatus()} \n\n # Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
   }
 
   def getLastCommit(): Option[Commit] = {
@@ -18,7 +18,7 @@ case class Repo(repoDir: String) {
     hash.map(value => Commit.getCommit(value))
   }
 
-  def _getStaggedStatus(): String = {
+  private def getStaggedStatus(): String = {
     val hash = FilesIO.getHash(s"${repoDir}${File.separator}STAGE")
     hash match {
       case None => "-- Nothing in stage --"
@@ -34,9 +34,9 @@ case class Repo(repoDir: String) {
     }
   }
 
-  def _getModifiedStatus(): String = "Not yet implemented"
+  private def getModifiedStatus(): String = "Not yet implemented"
 
-  def _getUntrackedStatus(): String = {
+  private def getUntrackedStatus(): String = {
     val files: Array[String] = getLastCommit() match {
       case None         => allFiles
       case Some(commit) => allFiles.diff(commit.tree.getAllFiles())

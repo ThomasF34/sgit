@@ -108,7 +108,7 @@ object Tree {
           .split(File.separator)
       })
 
-    _createTree(explicitedFiles, "", projectDir);
+    createTree(explicitedFiles, "", projectDir);
   }
 
   /**
@@ -116,7 +116,7 @@ object Tree {
     * The later should describe the path of a file. Each path should begin from the repodir
     * and each element represent a dir. The last element is the name of the file to add.
     */
-  def _createTree(
+  private def createTree(
       files: Array[Array[String]],
       currentName: String,
       projectDir: String
@@ -136,7 +136,7 @@ object Tree {
       .groupBy[String](splitedPath => splitedPath(0))
       .map {
         case (name, tree) => {
-          _createTree(
+          createTree(
             tree.map(_.tail),
             s"${currentName}${name}${File.separator}",
             projectDir
