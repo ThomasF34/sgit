@@ -1,11 +1,10 @@
 package igpolytech
-import java.io.File
 import scopt.OParser
 
 case class Config(
     mode: String = "",
     path: String = ".",
-    files: Seq[File] = Seq(),
+    files: Array[String] = Array(),
     patch: Boolean = false,
     stats: Boolean = false,
     givenName: String = "",
@@ -36,9 +35,9 @@ object Parser extends App {
         .action((_, c) => c.copy(mode = "add"))
         .text("adds the given files to the stage")
         .children(
-          arg[File]("<file>...")
+          arg[String]("<file>...")
             .unbounded()
-            .optional()
+            .required()
             .action((x, c) => c.copy(files = c.files :+ x))
             .text("file to add to stage")
         ),
@@ -112,10 +111,10 @@ object Parser extends App {
 
       config.mode match {
         case "init" => {
-          println(new Repo().init(config.path))
+          println(Repo.init(config.path))
         }
         case _ => {
-          new Repo().getRepoDir() match {
+          Repo.getRepoDir() match {
             case None => {
               println(
                 "fatal: not a sgit repository (or any of the parent directories): .sgit"
@@ -123,15 +122,15 @@ object Parser extends App {
               System.exit(1)
             }
             case Some(value) => {
-              val repoDir: File = new File(value)
+              val repo: Repo = new Repo(value)
               config.mode match {
-                case "add"      => println("Not yet implemented")
+                case "add"      => println(repo.add(config.files))
                 case "commit"   => println("Not yet implemented")
                 case "branch"   => println("Not yet implemented")
                 case "log"      => println("Not yet implemented")
                 case "diff"     => println("Not yet implemented")
                 case "tag"      => println("Not yet implemented")
-                case "status"   => println("Not yet implemented")
+                case "status"   => println(repo.getStatus())
                 case "merge"    => println("Not yet implemented")
                 case "rebase"   => println("Not yet implemented")
                 case "checkout" => println("Not yet implemented")

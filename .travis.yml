@@ -13,9 +13,14 @@ env:
 jobs:
   include:
   - stage: test & sonarqube analysis
+    if: branch = master
     script:
     - sbt coverage test coverageReport
     - sonar-scanner -D sonar.host.url=$SONAR_HOST_URL -D sonar.login=$SONAR_TOKEN -X
+  - stage: test
+    if: branch != master
+    script:
+    - sbt test
   - stage: lint
     script:
     - sbt scalafmtCheckAll
