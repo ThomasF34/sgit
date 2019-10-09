@@ -3,8 +3,16 @@ import java.security.MessageDigest
 import org.scalatest._
 import org.scalatest.Matchers
 import scala.xml.Node
+import java.io.File
 
 class TreeTest extends FunSpec with Matchers {
+  override def withFixture(test: NoArgTest) = {
+    try test()
+    finally {
+      if (new File("testDir").exists()) FilesIO.delete("testDir")
+    }
+  }
+
   describe("Tree generating") {
     // it(
     //   "should generate a XML element based on containing trees, blobs and own name"
@@ -35,6 +43,26 @@ class TreeTest extends FunSpec with Matchers {
       emptyTree2.hash shouldNot be(treeWithTree.hash)
       treeWithTree.hash shouldNot be(treeWithBlob.hash)
     }
+
+    it("should create tree from string array") {
+      FilesIO.createDirectories(Array("testDir"))
+      val fakeProjectDir = new File(".").getCanonicalPath()
+      FilesIO.write("testDir/test", "abc")
+
+      val createdTree =
+        Tree.createFromList(
+          Array("testDir"),
+          s"${fakeProjectDir}${File.separator}"
+        )
+
+      assert(
+        createdTree.trees.map(_.name).contains(s"testDir${File.separator}")
+      )
+
+      assert(
+        createdTree.trees.flatMap(_.blobs.map(_.name)).contains("test")
+      )
+    }
   }
 
   describe("Tree merging") {
@@ -58,7 +86,23 @@ class TreeTest extends FunSpec with Matchers {
 
   describe("Tree exploration") {
     it("should return all file from a tree") {
-      pending
+      val firstTree =
+        new Tree("A114", Array(), Array(new Blob("unoBlobo", () => "Italian")))
+      val secondTree =
+        new Tree("A115", Array(), Array(new Blob("duoBlobi", () => "Italian")))
+      val tree = new Tree(
+        "A113",
+        Array(firstTree, secondTree)
+      )
+
+      val allFiles = tree.getAllFiles()
+
+      assert(
+        allFiles.contains(s"A113${File.separator}A114${File.separator}unoBlobo")
+      )
+      assert(
+        allFiles.contains(s"A113${File.separator}A115${File.separator}duoBlobi")
+      )
     }
   }
 }

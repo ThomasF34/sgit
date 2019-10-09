@@ -53,7 +53,8 @@ class RepoTest extends FunSpec {
       FilesIO.write(s".sgit${File.separator}HEAD", "")
       assert(repo.getLastCommit().isEmpty)
     }
-
+  }
+  describe("Stage handling") {
     it("should get Tree from STAGE") {
       Repo.init(".")
       val repo = Repo(".sgit")
@@ -94,8 +95,5 @@ class RepoTest extends FunSpec {
         Tree.getTree(repo.treesPath, repo.blobsPath, hash.get).equals(tree)
       )
     }
-  }
-  describe("Stage handling") {
-    pending
   }
 }

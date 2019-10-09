@@ -99,6 +99,7 @@ object Tree {
   }
 
   def createFromList(files: Array[String], projectDir: String): Tree = {
+    println(files.mkString(" - "))
     val explicitedFiles: Array[Array[String]] = files
       .flatMap(f => FilesIO.getAllFiles(new File(f)))
       .map(file => {
@@ -108,6 +109,7 @@ object Tree {
           .split(File.separator)
       })
 
+    println(explicitedFiles.map(_.mkString(" - ")).mkString)
     createTree(explicitedFiles, "", projectDir);
   }
 
