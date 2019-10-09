@@ -13,38 +13,61 @@ class RepoTest extends FunSpec {
     }
   }
 
-  describe("Repo") {
-    describe("Init") {
-      it("should create dirs and files after init") {
-        val res = Repo.init(".")
-        assert(res == "Repo initialized")
-        assert(new File(".sgit/STAGE").exists())
-        assert(new File(".sgit/HEAD").exists())
-        assert(new File(".sgit/tags").exists())
-        assert(new File(".sgit/commits").exists())
-        assert(new File(".sgit/trees").exists())
-        assert(new File(".sgit/blobs").exists())
-        assert(new File(".sgit/branches").exists())
-      }
-
-      it("should be initialized in a given path") {
-        new File("./test").mkdir()
-        val res = Repo.init("./test")
-        assert(res == "Repo initialized")
-        assert(new File("test/.sgit/STAGE").exists())
-        assert(new File("test/.sgit/HEAD").exists())
-        assert(new File("test/.sgit/tags").exists())
-        assert(new File("test/.sgit/commits").exists())
-        assert(new File("test/.sgit/trees").exists())
-        assert(new File("test/.sgit/blobs").exists())
-        assert(new File("test/.sgit/branches").exists())
-      }
-
-      it("shouldn't be initialized if already exists in current directory") {
-        Repo.init(".")
-        val res = Repo.init(".")
-        assert(res == "Sorry, a sgit repository is already initialized")
-      }
+  describe("Init") {
+    it("should create dirs and files after init") {
+      val res = Repo.init(".")
+      assert(res == "Repo initialized")
+      assert(new File(".sgit/STAGE").exists())
+      assert(new File(".sgit/HEAD").exists())
+      assert(new File(".sgit/tags").exists())
+      assert(new File(".sgit/commits").exists())
+      assert(new File(".sgit/trees").exists())
+      assert(new File(".sgit/blobs").exists())
+      assert(new File(".sgit/branches").exists())
     }
+
+    it("should be initialized in a given path") {
+      new File("./test").mkdir()
+      val res = Repo.init("./test")
+      assert(res == "Repo initialized")
+      assert(new File("test/.sgit/STAGE").exists())
+      assert(new File("test/.sgit/HEAD").exists())
+      assert(new File("test/.sgit/tags").exists())
+      assert(new File("test/.sgit/commits").exists())
+      assert(new File("test/.sgit/trees").exists())
+      assert(new File("test/.sgit/blobs").exists())
+      assert(new File("test/.sgit/branches").exists())
+    }
+
+    it("shouldn't be initialized if already exists in current directory") {
+      Repo.init(".")
+      val res = Repo.init(".")
+      assert(res == "Sorry, a sgit repository is already initialized")
+    }
+  }
+
+  describe("Commit handling") {
+    it("should get commit from HEAD") {
+      pending
+    }
+
+    it("shouldn't get commit from empty HEAD") {
+      pending
+    }
+
+    it("should get Tree from STAGE") {
+      pending
+    }
+
+    it("shouldn't get tree from empty STAGE") {
+      pending
+    }
+
+    it("should set STAGE from a tree") {
+      pending
+    }
+  }
+  describe("Stage handling") {
+    pending
   }
 }
