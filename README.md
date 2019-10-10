@@ -5,10 +5,10 @@ Git-like CLI in scala
 ---
 
 - [x] init
-- [ ] status
-- [ ] add
+- [x] status
+- [x] add
 - [ ] commit
-- [ ] diff :warning:
+- [x] diff :warning:
 - [ ] log
 - [ ] log p
 - [ ] log stat
