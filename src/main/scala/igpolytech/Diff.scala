@@ -18,7 +18,7 @@ object Diff {
     ???
   }
 
-  def diffBetweenTexts(text1: String, text2: String) = {
+  def fromContents(oldContent: String, newContent: String): Diff = {
 
     @tailrec
     def lcsLength[T](
@@ -79,16 +79,18 @@ object Diff {
 
     def splitByLine(text: String): List[String] = text.split("\n").toList
 
-    val lines1 = splitByLine(text1)
-    val lines2 = splitByLine(text2)
-    printDiff(
-      lcsLength(lines1, lines2, List.fill(1, lines2.size + 1)(0)),
-      lines1,
-      lines2,
-      lines1.size,
-      lines2.size,
-      Array()
-    ).reverse
+    val lines1 = splitByLine(oldContent)
+    val lines2 = splitByLine(newContent)
+    Diff(
+      printDiff(
+        lcsLength(lines1, lines2, List.fill(1, lines2.size + 1)(0)),
+        lines1,
+        lines2,
+        lines1.size,
+        lines2.size,
+        Array()
+      ).reverse
+    )
 
   }
 }

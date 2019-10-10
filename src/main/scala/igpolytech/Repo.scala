@@ -39,17 +39,26 @@ case class Repo(repoDir: String) {
     //if no stage => compare actual workdir with last commit
     //if stage => compare actual workdir with stage
     // If no stage && no last commit => nothing
-    val workingDirTree: Tree =
-      Tree.createFromList(Array(projectDir), projectDir)
-    val comparedTree = getStage match {
-      case Some(value) => Some(value)
-      case None =>
-        getLastCommit().map(_.tree)
-    }
+    // val comparedTree = getStage match {
+    //   case Some(value) => Some(value)
+    //   case None =>
+    //     getLastCommit().map(_.tree)
+    // }
 
-    comparedTree match {
-      case Some(tree) => "Will print diff"
-      case None       => "-- Nothing modified --"
+    // comparedTree match {
+    //   case Some(tree) => "Will print diff"
+    //   case None       => "-- Nothing modified --"
+    // }
+
+    (getStage, getLastCommit()) match {
+      case (Some(stage), Some(Commit(commitTree))) => "will print diff"
+      case (Some(stage), None) => {
+        val diff = stage.getModified(projectDir, blobsPath)
+        if (diff.isEmpty) "-- Nothing modified --"
+        else diff.mkString
+      }
+      case (None, Some(Commit(commitTree))) => "Impossible"
+      case (None, None)                     => "-- Nothing modified --"
     }
   }
 

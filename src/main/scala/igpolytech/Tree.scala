@@ -9,15 +9,15 @@ case class Tree(
 ) {
 
   def hash: String =
-    FilesIO.generateHash(s"${name}${trees.mkString}${blobs.mkString}")
+    FilesIO.generateHash(this.toString())
 
   /**
     * Returns an array of the tree content
     **/
   def getAllFiles(): Array[String] =
     trees.flatMap(
-      tree => tree.getAllFiles().map(file => s"${name}${File.separator}$file")
-    ) ++ blobs.map(blob => s"${name}${File.separator}${blob.name}")
+      tree => tree.getAllFiles().map(file => s"${name}$file")
+    ) ++ blobs.map(blob => s"${name}${blob.name}")
 
   /**
     * Saves the tree in the tree folder
@@ -64,6 +64,15 @@ case class Tree(
     new Tree(name, newTrees, newBlobs)
   }
 
+  def getModified(projectDir: String, blobsPath: String): Array[Diff] = {
+    blobs.map(
+      _.getDiffWithNew(
+        s"${projectDir}${File.separator}${name}${File.separator}",
+        blobsPath
+      )
+    ) ++ trees.flatMap(_.getModified(projectDir, blobsPath))
+  }
+
   override def toString(): String =
     s"${name}${trees.map(_.name).mkString}${blobs.mkString}"
 
@@ -99,7 +108,6 @@ object Tree {
   }
 
   def createFromList(files: Array[String], projectDir: String): Tree = {
-    println(files.mkString(" - "))
     val explicitedFiles: Array[Array[String]] = files
       .flatMap(f => FilesIO.getAllFiles(new File(f)))
       .map(file => {
@@ -109,7 +117,6 @@ object Tree {
           .split(File.separator)
       })
 
-    println(explicitedFiles.map(_.mkString(" / ")).mkString(" - "))
     createTree(explicitedFiles, "", projectDir);
   }
 

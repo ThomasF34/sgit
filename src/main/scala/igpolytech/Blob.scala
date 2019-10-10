@@ -9,6 +9,13 @@ case class Blob(name: String, getContent: () => String) {
     FilesIO.write(s"${dirPath}${hash}", content)
   }
 
+  def getDiffWithNew(newDirPath: String, blobPath: String): Diff = {
+    Diff.fromContents(
+      FilesIO.getContent(s"${blobPath}${hash}"),
+      FilesIO.getContent(s"${newDirPath}${name}")
+    )
+  }
+
   override def toString(): String = hash
 }
 

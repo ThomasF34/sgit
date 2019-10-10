@@ -31,11 +31,11 @@ class TreeTest extends FunSpec with Matchers {
     // }
 
     it("should generate hash base on concatenation of name trees and blobs") {
-      val emptyTree = new Tree("A113")
-      val emptyTree2 = new Tree("A114")
-      val treeWithTree = new Tree("A114", Array(emptyTree2))
+      val emptyTree = new Tree(s"A113${File.separator}")
+      val emptyTree2 = new Tree(s"A114${File.separator}")
+      val treeWithTree = new Tree(s"A114${File.separator}", Array(emptyTree2))
       val treeWithBlob = new Tree(
-        "A114",
+        s"A114${File.separator}",
         Array(emptyTree2),
         Array(new Blob("unoBlobo", () => "Italian"))
       )
@@ -47,7 +47,7 @@ class TreeTest extends FunSpec with Matchers {
     it("should create tree from string array") {
       FilesIO.createDirectories(Array("testDir"))
       val fakeProjectDir = new File(".").getCanonicalPath()
-      FilesIO.write("testDir/test", "abc")
+      FilesIO.write(s"testDir${File.separator}test", "abc")
 
       val createdTree =
         Tree.createFromList(
@@ -67,19 +67,21 @@ class TreeTest extends FunSpec with Matchers {
 
   describe("Tree merging") {
     it("should merge two trees") {
-      val tree = new Tree("A113")
+      val tree = new Tree(s"A113${File.separator}")
       val blob = new Blob("unoBlobo", () => "Italian")
       val blob2 = new Blob("duoBlobi", () => "Italian again")
-      val treeWithBlob = new Tree("A114", Array(tree), Array(blob))
+      val treeWithBlob =
+        new Tree(s"A114${File.separator}", Array(tree), Array(blob))
       val treeWithBlob2 = new Tree(
-        "A114",
+        s"A114${File.separator}",
         Array(tree),
         Array(blob2)
       )
 
       val mergedTree = treeWithBlob.mergeTree(treeWithBlob2)
 
-      val expectedTree = new Tree("A114", Array(tree), Array(blob, blob2))
+      val expectedTree =
+        new Tree(s"A114${File.separator}", Array(tree), Array(blob, blob2))
       assert(mergedTree.equals(expectedTree))
     }
   }
@@ -87,11 +89,19 @@ class TreeTest extends FunSpec with Matchers {
   describe("Tree exploration") {
     it("should return all file from a tree") {
       val firstTree =
-        new Tree("A114", Array(), Array(new Blob("unoBlobo", () => "Italian")))
+        new Tree(
+          s"A114${File.separator}",
+          Array(),
+          Array(new Blob("unoBlobo", () => "Italian"))
+        )
       val secondTree =
-        new Tree("A115", Array(), Array(new Blob("duoBlobi", () => "Italian")))
+        new Tree(
+          s"A115${File.separator}",
+          Array(),
+          Array(new Blob("duoBlobi", () => "Italian"))
+        )
       val tree = new Tree(
-        "A113",
+        s"A113${File.separator}",
         Array(firstTree, secondTree)
       )
 
@@ -105,62 +115,62 @@ class TreeTest extends FunSpec with Matchers {
       )
     }
 
-    // describe("Tree diff") {
-    //   it("should return no diff between the same files") {
-    //     FilesIO.createDirectories(Array("testDir"))
-    //     FilesIO.write("testDir/test", "abc")
+    describe("Tree diff") {
+      // it("should return no diff between the same files") {
+      //   FilesIO.createDirectories(Array("testDir"))
+      //   FilesIO.write("testDir/test", "abc")
 
-    //     val diff = Diff.fromFiles("testDir/test", "testDir/test")
+      //   val diff = Diff.fromFiles("testDir/test", "testDir/test")
 
-    //     assert(diff.isEmpty)
-    //   }
+      //   assert(diff.isEmpty)
+      // }
 
-    //   it("should return the difference between two files") {
-    //     FilesIO.createDirectories(Array("testDir"))
-    //     FilesIO.write("testDir/old", "to infinity")
-    //     FilesIO.write("testDir/new", "to infinity\nand beyond")
+      //   it("should return the difference between two files") {
+      //     FilesIO.createDirectories(Array("testDir"))
+      //     FilesIO.write("testDir/old", "to infinity")
+      //     FilesIO.write("testDir/new", "to infinity\nand beyond")
 
-    //     val diff = Diff.fromFiles("testDir/old", "testDir/new")
+      //     val diff = Diff.fromFiles("testDir/old", "testDir/new")
 
-    //     val expectedDiff = new Diff(ChangeType.ADD, "and beyond")
-    //     assert(diff.isDefined)
-    //     assert(diff.equals(expectedDiff))
-    //   }
+      //     val expectedDiff = new Diff(ChangeType.ADD, "and beyond")
+      //     assert(diff.isDefined)
+      //     assert(diff.equals(expectedDiff))
+      //   }
 
-    //   it("should return the diff between two different trees") {
-    //     val firstTree =
-    //       new Tree(
-    //         "A113",
-    //         Array(),
-    //         Array(new Blob("file", () => "to infinity"))
-    //       )
-    //     val secondTree =
-    //       new Tree(
-    //         "A113",
-    //         Array(),
-    //         Array(new Blob("file", () => "to infinity\nand beyond"))
-    //       )
+      //   it("should return the diff between two different trees") {
+      //     val firstTree =
+      //       new Tree(
+      //         "A113",
+      //         Array(),
+      //         Array(new Blob("file", () => "to infinity"))
+      //       )
+      //     val secondTree =
+      //       new Tree(
+      //         "A113",
+      //         Array(),
+      //         Array(new Blob("file", () => "to infinity\nand beyond"))
+      //       )
 
-    //     val diffArray = Diff.fromTrees(firstTree, secondTree)
+      //     val diffArray = Diff.fromTrees(firstTree, secondTree)
 
-    //     val expectedDiff = new Diff(ChangeType.ADD, "and beyond")
-    //     assert(!diffArray.isEmpty)
-    //     assert(diffArray.length == 1)
-    //     assert(diffArray.contains(expectedDiff))
-    //   }
+      //     val expectedDiff = new Diff(ChangeType.ADD, "and beyond")
+      //     assert(!diffArray.isEmpty)
+      //     assert(diffArray.length == 1)
+      //     assert(diffArray.contains(expectedDiff))
+      //   }
 
-    //   it("should return no diff between the same trees") {
-    //     val firstTree =
-    //       new Tree(
-    //         "A113",
-    //         Array(),
-    //         Array(new Blob("unoBlobo", () => "Italian"))
-    //       )
+      //   it("should return no diff between the same trees") {
+      //     val firstTree =
+      //       new Tree(
+      //         "A113",
+      //         Array(),
+      //         Array(new Blob("unoBlobo", () => "Italian"))
+      //       )
 
-    //     val diffArray = Diff.fromTrees(firstTree, firstTree)
+      //     val diffArray = Diff.fromTrees(firstTree, firstTree)
 
-    //     assert(diffArray.isEmpty)
-    //   }
-    // }
+      //     assert(diffArray.isEmpty)
+      //   }
+    }
   }
 }
