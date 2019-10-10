@@ -16,7 +16,7 @@ case class Tree(
     **/
   def getAllFiles(): Array[String] =
     trees.flatMap(
-      tree => tree.getAllFiles().map(file => s"${name}$file")
+      tree => tree.getAllFiles()
     ) ++ blobs.map(blob => s"${name}${blob.name}")
 
   /**
@@ -65,12 +65,14 @@ case class Tree(
   }
 
   def getModified(projectDir: String, blobsPath: String): Array[Diff] = {
-    blobs.map(
-      _.getDiffWithNew(
-        s"${projectDir}${File.separator}${name}${File.separator}",
-        blobsPath
-      )
-    ) ++ trees.flatMap(_.getModified(projectDir, blobsPath))
+    blobs
+      .flatMap(
+        _.getDiffWithNew(
+          projectDir,
+          name,
+          blobsPath
+        )
+      ) ++ trees.flatMap(_.getModified(projectDir, blobsPath))
   }
 
   override def toString(): String =

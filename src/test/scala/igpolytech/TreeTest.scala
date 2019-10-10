@@ -90,87 +90,54 @@ class TreeTest extends FunSpec with Matchers {
     it("should return all file from a tree") {
       val firstTree =
         new Tree(
-          s"A114${File.separator}",
+          s"A113${File.separator}",
           Array(),
           Array(new Blob("unoBlobo", () => "Italian"))
         )
       val secondTree =
         new Tree(
-          s"A115${File.separator}",
+          s"A114${File.separator}",
           Array(),
           Array(new Blob("duoBlobi", () => "Italian"))
         )
       val tree = new Tree(
-        s"A113${File.separator}",
+        "",
         Array(firstTree, secondTree)
       )
 
       val allFiles = tree.getAllFiles()
 
       assert(
-        allFiles.contains(s"A113${File.separator}A114${File.separator}unoBlobo")
+        allFiles.contains(s"A113${File.separator}unoBlobo")
       )
       assert(
-        allFiles.contains(s"A113${File.separator}A115${File.separator}duoBlobi")
+        allFiles.contains(s"A114${File.separator}duoBlobi")
       )
     }
 
     describe("Tree diff") {
-      // it("should return no diff between the same files") {
-      //   FilesIO.createDirectories(Array("testDir"))
-      //   FilesIO.write("testDir/test", "abc")
+      it("should return no diff between the same content") {
+        val diff = Diff.fromContents("test\ntest2", "test\ntest2", "")
 
-      //   val diff = Diff.fromFiles("testDir/test", "testDir/test")
+        assert(diff.isEmpty)
+      }
 
-      //   assert(diff.isEmpty)
-      // }
+      it("should return the diff between different content") {
+        val diff = Diff.fromContents(
+          "It's known\nDisney is best",
+          "It's known\nPixar is best",
+          ""
+        )
 
-      //   it("should return the difference between two files") {
-      //     FilesIO.createDirectories(Array("testDir"))
-      //     FilesIO.write("testDir/old", "to infinity")
-      //     FilesIO.write("testDir/new", "to infinity\nand beyond")
-
-      //     val diff = Diff.fromFiles("testDir/old", "testDir/new")
-
-      //     val expectedDiff = new Diff(ChangeType.ADD, "and beyond")
-      //     assert(diff.isDefined)
-      //     assert(diff.equals(expectedDiff))
-      //   }
-
-      //   it("should return the diff between two different trees") {
-      //     val firstTree =
-      //       new Tree(
-      //         "A113",
-      //         Array(),
-      //         Array(new Blob("file", () => "to infinity"))
-      //       )
-      //     val secondTree =
-      //       new Tree(
-      //         "A113",
-      //         Array(),
-      //         Array(new Blob("file", () => "to infinity\nand beyond"))
-      //       )
-
-      //     val diffArray = Diff.fromTrees(firstTree, secondTree)
-
-      //     val expectedDiff = new Diff(ChangeType.ADD, "and beyond")
-      //     assert(!diffArray.isEmpty)
-      //     assert(diffArray.length == 1)
-      //     assert(diffArray.contains(expectedDiff))
-      //   }
-
-      //   it("should return no diff between the same trees") {
-      //     val firstTree =
-      //       new Tree(
-      //         "A113",
-      //         Array(),
-      //         Array(new Blob("unoBlobo", () => "Italian"))
-      //       )
-
-      //     val diffArray = Diff.fromTrees(firstTree, firstTree)
-
-      //     assert(diffArray.isEmpty)
-      //   }
+        assert(diff.isDefined)
+        assert(diff.get.changes.length == 2)
+        assert(
+          diff.get.changes.contains(Change(ChangeType.ADD, "Pixar is best"))
+        )
+        assert(
+          diff.get.changes.contains(Change(ChangeType.SUB, "Disney is best"))
+        )
+      }
     }
   }
 }

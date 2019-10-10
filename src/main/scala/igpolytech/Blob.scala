@@ -9,10 +9,15 @@ case class Blob(name: String, getContent: () => String) {
     FilesIO.write(s"${dirPath}${hash}", content)
   }
 
-  def getDiffWithNew(newDirPath: String, blobPath: String): Diff = {
+  def getDiffWithNew(
+      projectDir: String,
+      treeName: String,
+      blobPath: String
+  ): Option[Diff] = {
     Diff.fromContents(
       FilesIO.getContent(s"${blobPath}${hash}"),
-      FilesIO.getContent(s"${newDirPath}${name}")
+      FilesIO.getContent(s"${projectDir}${treeName}${name}"),
+      s"${treeName}$name"
     )
   }
 

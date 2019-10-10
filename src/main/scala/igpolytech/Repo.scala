@@ -10,7 +10,7 @@ case class Repo(repoDir: String) {
   val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
 
   def getStatus(): String = {
-    s"# Stagged \n${getStaggedStatus()} \n\n # Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
+    s"# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
   }
 
   def getLastCommit(): Option[Commit] = {
@@ -50,22 +50,20 @@ case class Repo(repoDir: String) {
     //   case None       => "-- Nothing modified --"
     // }
 
-    (getStage, getLastCommit()) match {
-      case (Some(stage), Some(Commit(commitTree))) => "will print diff"
-      case (Some(stage), None) => {
+    getStage() match {
+      case Some(stage) => {
         val diff = stage.getModified(projectDir, blobsPath)
         if (diff.isEmpty) "-- Nothing modified --"
         else diff.mkString
       }
-      case (None, Some(Commit(commitTree))) => "Impossible"
-      case (None, None)                     => "-- Nothing modified --"
+      case None => "-- Nothing modified --"
     }
   }
 
   private def getUntrackedStatus(): String = {
-    val files: Array[String] = getLastCommit() match {
-      case None         => allFiles
-      case Some(commit) => allFiles.diff(commit.tree.getAllFiles())
+    val files: Array[String] = getStage() match {
+      case None        => allFiles
+      case Some(stage) => allFiles.diff(stage.getAllFiles())
     }
 
     if (files.isEmpty) "-- Nothing is untracked --"
@@ -90,7 +88,7 @@ case class Repo(repoDir: String) {
     "Changes added"
   }
 
-  def getStage: Option[Tree] = {
+  def getStage(): Option[Tree] = {
     val stageHashOption = FilesIO.getHash(s"${repoDir}${File.separator}STAGE")
     stageHashOption.map(
       stageHash =>
@@ -111,7 +109,7 @@ case class Repo(repoDir: String) {
   }
 
   def allFiles: Array[String] =
-    FilesIO.getAllFilesPath(s"${repoDir}${File.separator}..")
+    FilesIO.getAllFilesPath(projectDir)
 }
 
 object Repo {

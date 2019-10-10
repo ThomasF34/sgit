@@ -1,8 +1,15 @@
 package igpolytech
 import scala.annotation.tailrec
 
-case class Diff(changes: Array[Change]) {
+case class Diff(changes: Array[Change], filePath: String) {
   override def toString(): String = {
+    val (added, subed) = changes.partition(_.changeType == ChangeType.ADD)
+    if (added.length > 0 && subed.length > 0) s"modified content -> $filePath"
+    else if (added.length > 0) s"added content -> $filePath"
+    else s"deleted content -> $filePath"
+  }
+
+  def getDetails(): String = {
     changes.mkString("\n")
   }
 }
@@ -18,7 +25,11 @@ object Diff {
     ???
   }
 
-  def fromContents(oldContent: String, newContent: String): Diff = {
+  def fromContents(
+      oldContent: String,
+      newContent: String,
+      filePath: String
+  ): Option[Diff] = {
 
     @tailrec
     def lcsLength[T](
@@ -81,16 +92,15 @@ object Diff {
 
     val lines1 = splitByLine(oldContent)
     val lines2 = splitByLine(newContent)
-    Diff(
-      printDiff(
-        lcsLength(lines1, lines2, List.fill(1, lines2.size + 1)(0)),
-        lines1,
-        lines2,
-        lines1.size,
-        lines2.size,
-        Array()
-      ).reverse
-    )
-
+    val result = printDiff(
+      lcsLength(lines1, lines2, List.fill(1, lines2.size + 1)(0)),
+      lines1,
+      lines2,
+      lines1.size,
+      lines2.size,
+      Array()
+    ).reverse
+    if (result.isEmpty) None
+    else Some(Diff(result, filePath))
   }
 }
