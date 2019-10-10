@@ -8,14 +8,15 @@ case class Repo(repoDir: String) {
 
   val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
   val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
+  val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
 
   def getStatus(): String = {
     s"# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
   }
 
   def getLastCommit(): Option[Commit] = {
-    val hash = FilesIO.getHash(s"${repoDir}${File.separator}HEAD")
-    hash.map(value => Commit.getCommit(value))
+    val hashOption = FilesIO.getHash(s"${repoDir}${File.separator}HEAD")
+    hashOption.map(hash => Commit.getCommit(hash, commitsPath))
   }
 
   private def getStaggedStatus(): String = {
@@ -35,21 +36,6 @@ case class Repo(repoDir: String) {
   }
 
   private def getModifiedStatus(): String = {
-    // Modified =
-    //if no stage => compare actual workdir with last commit
-    //if stage => compare actual workdir with stage
-    // If no stage && no last commit => nothing
-    // val comparedTree = getStage match {
-    //   case Some(value) => Some(value)
-    //   case None =>
-    //     getLastCommit().map(_.tree)
-    // }
-
-    // comparedTree match {
-    //   case Some(tree) => "Will print diff"
-    //   case None       => "-- Nothing modified --"
-    // }
-
     getStage() match {
       case Some(stage) => {
         val diff = stage.getModified(projectDir, blobsPath)
@@ -81,11 +67,31 @@ case class Repo(repoDir: String) {
     // If no stage -> volatile tree = stage (means no commit had been done)
     // If stage -> merge volatile tree with stage tree
     //WARNING WHEN COMMIT DO NOT RESET STAGE. WE WONT BE ABLE TO COMPARE WITH STAGE IF RESETED
-    getStage match {
+    getStage() match {
       case Some(stage) => setStage(stage.mergeTree(volatileTree))
       case None        => setStage(volatileTree)
     }
     "Changes added"
+  }
+
+  def commit(text: String, author: String): String = {
+    def commitTree(stage: Tree, lastCommitHash: String): String = {
+      val commit = Commit(stage.hash, lastCommitHash, text, author)
+      commit.save(commitsPath)
+      s"Change commited : ${commit.title}"
+    }
+
+    (getStage(), getLastCommit()) match {
+      case (Some(stage), Some(commit)) => {
+        val tree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
+        Diff.fromTrees(stage, tree) match {
+          case None        => "Nothing to commit"
+          case Some(value) => commitTree(stage, tree.hash)
+        }
+      }
+      case (Some(stage), None) => commitTree(stage, "")
+      case (None, _)           => "Nothing in stage"
+    }
   }
 
   def getStage(): Option[Tree] = {

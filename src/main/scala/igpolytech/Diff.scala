@@ -15,15 +15,9 @@ case class Diff(changes: Array[Change], filePath: String) {
 }
 
 object Diff {
-  def fromFiles(firstFile: String, secondFile: String): Option[Diff] = {
-    // Some(new Diff(ADD, "abc"))
-    ???
-  }
 
-  def fromTrees(firstTree: Tree, secondTree: Tree): Array[Diff] = {
-    // Array(new Diff(SUB, "abc"))
-    ???
-  }
+  //TODO
+  def fromTrees(oldTree: Tree, newTree: Tree): Option[Diff] = ???
 
   def fromContents(
       oldContent: String,
