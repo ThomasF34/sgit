@@ -15,7 +15,12 @@ case class Config(
 
 object Parser extends App {
 
-  Diff.diffBetweenTexts("abc\ndef\nghi\njkl", "abc\ndef\ngih\njkl\nlapin")
+  println(
+    Diff
+      .diffBetweenTexts("abc\ndef\nghi\njkl", "abc\ndef\ngih\njkl\nlapin")
+      .reverse
+      .mkString("\n")
+  )
   // Tree.createFromList(Array("tmp"), new File(".").getCanonicalPath())
 
   val builder = OParser.builder[Config]

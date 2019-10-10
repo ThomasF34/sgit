@@ -43,55 +43,39 @@ object Diff {
       }
     }
 
+    @tailrec
     def printDiff[T](
         matrix: List[List[Int]],
         l1: List[T],
         l2: List[T],
         i: Int,
-        j: Int
-    ): Unit = {
-      if (i >= 0 && j >= 0 && l1(i) == l2(j)) {
-        printDiff(matrix, l1, l2, i - 1, j - 1)
-        println(s" ${l1(i)}")
-      } else if (j >= 0 && (i == 0 || matrix(i + 1)(j) >= matrix(i)(j + 1))) {
-        printDiff(matrix, l1, l2, i, j - 1)
-        println(s"+ ${l2(j)}")
-      } else if (i >= 0 && (j == 0 || matrix(i + 1)(j) < matrix(i)(j + 1))) {
-        printDiff(matrix, l1, l2, i - 1, j)
-        println(s"- ${l1(i)}")
+        j: Int,
+        changes: Array[Change]
+    ): Array[Change] = {
+      if (i > 0 && j > 0 && l1(i - 1) == l2(j - 1)) {
+        printDiff(matrix, l1, l2, i - 1, j - 1, changes)
+      } else if (j > 0 && (i == 0 || matrix(i)(j - 1) >= matrix(i - 1)(j))) {
+        printDiff(
+          matrix,
+          l1,
+          l2,
+          i,
+          j - 1,
+          changes :+ Change(ChangeType.ADD, l2(j - 1).toString())
+        )
+      } else if (i > 0 && (j == 0 || matrix(i)(j - 1) < matrix(i - 1)(j))) {
+        printDiff(
+          matrix,
+          l1,
+          l2,
+          i - 1,
+          j,
+          changes :+ Change(ChangeType.SUB, l1(i - 1).toString())
+        )
+      } else {
+        changes
       }
     }
-
-    // def futurePrintDiff[T](
-    //     matrix: List[List[Int]],
-    //     l1: List[T],
-    //     l2: List[T],
-    //     i: Int,
-    //     j: Int,
-    //     changes: Array[Change]
-    // ): Array[Change] = {
-    //   if (i >= 0 && j >= 0 && l1(i) == l2(j)) {
-    //     futurePrintDiff(matrix, l1, l2, i - 1, j - 1, changes)
-    //   } else if (j >= 0 && (i == 0 || matrix(i + 1)(j) >= matrix(i)(j + 1))) {
-    //     futurePrintDiff(
-    //       matrix,
-    //       l1,
-    //       l2,
-    //       i,
-    //       j - 1,
-    //       changes :+ Change(ChangeType.ADD, l2(j).toString())
-    //     )
-    //   } else if (i >= 0 && (j == 0 || matrix(i + 1)(j) < matrix(i)(j + 1))) {
-    //     futurePrintDiff(
-    //       matrix,
-    //       l1,
-    //       l2,
-    //       i - 1,
-    //       j,
-    //       changes :+ Change(ChangeType.SUB, l1(i).toString())
-    //     )
-    //   }
-    // }
 
     def splitByLine(text: String): List[String] = text.split("\n").toList
 
@@ -101,16 +85,10 @@ object Diff {
       lcsLength(lines1, lines2, List.fill(1, lines2.size + 1)(0)),
       lines1,
       lines2,
-      lines1.size - 1,
-      lines2.size - 1
-    )
-    // futurePrintDiff(
-    //   lcsLength(lines1, lines2, List.fill(1, lines2.size + 1)(0)),
-    //   lines1,
-    //   lines2,
-    //   lines1.size - 1,
-    //   lines2.size - 1,
-    //   Array()
-    // )
+      lines1.size,
+      lines2.size,
+      Array()
+    ).reverse
+
   }
 }
