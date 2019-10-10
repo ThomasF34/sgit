@@ -1,5 +1,6 @@
 package igpolytech
 import scopt.OParser
+import java.io.File
 
 case class Config(
     mode: String = "",
@@ -13,6 +14,10 @@ case class Config(
 )
 
 object Parser extends App {
+
+  Diff.diffBetweenTexts("abc\ndef\nghi\njkl", "abc\ndef\ngih\njkl\nlapin")
+  // Tree.createFromList(Array("tmp"), new File(".").getCanonicalPath())
+
   val builder = OParser.builder[Config]
   val parser1 = {
     import builder._

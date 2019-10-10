@@ -109,7 +109,7 @@ object Tree {
           .split(File.separator)
       })
 
-    println(explicitedFiles.map(_.mkString(" - ")).mkString)
+    println(explicitedFiles.map(_.mkString(" / ")).mkString(" - "))
     createTree(explicitedFiles, "", projectDir);
   }
 

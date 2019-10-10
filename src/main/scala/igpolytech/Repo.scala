@@ -34,7 +34,24 @@ case class Repo(repoDir: String) {
     }
   }
 
-  private def getModifiedStatus(): String = "Not yet implemented"
+  private def getModifiedStatus(): String = {
+    // Modified =
+    //if no stage => compare actual workdir with last commit
+    //if stage => compare actual workdir with stage
+    // If no stage && no last commit => nothing
+    val workingDirTree: Tree =
+      Tree.createFromList(Array(projectDir), projectDir)
+    val comparedTree = getStage match {
+      case Some(value) => Some(value)
+      case None =>
+        getLastCommit().map(_.tree)
+    }
+
+    comparedTree match {
+      case Some(tree) => "Will print diff"
+      case None       => "-- Nothing modified --"
+    }
+  }
 
   private def getUntrackedStatus(): String = {
     val files: Array[String] = getLastCommit() match {
