@@ -26,6 +26,10 @@ object FilesIO {
     new File(s"${current.getAbsolutePath()}${File.separatorChar}$dir")
       .isDirectory()
 
+  def fileExists(path: String): Boolean =
+    new File(path)
+      .isFile()
+
   /**
     * Searchs recursively for the repo dir until reaching the root dir
     * Returns the path of the repo dir or $none if not found

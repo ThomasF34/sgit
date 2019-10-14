@@ -16,8 +16,49 @@ case class Diff(changes: Array[Change], filePath: String) {
 
 object Diff {
 
-  //TODO
-  def fromTrees(oldTree: Tree, newTree: Tree): Option[Diff] = ???
+  def getAddedFromTree(tree: Tree): Array[Diff] = {
+    tree.trees.flatMap(getAddedFromTree) ++ tree.blobs.map(
+      blob => Diff.addedFile(blob.content, s"${tree.name}${blob.name}")
+    )
+  }
+
+  def getRemovedFromTree(tree: Tree): Array[Diff] = {
+    tree.trees.flatMap(getRemovedFromTree) ++ tree.blobs.map(
+      blob => Diff.removedFile(blob.content, s"${tree.name}${blob.name}")
+    )
+  }
+
+  def fromTrees(oldTree: Tree, newTree: Tree): Array[Diff] = {
+    val diffFromTrees = newTree.trees.flatMap(
+      subtree =>
+        oldTree.trees.find(_.name == subtree.name) match {
+          case None             => getAddedFromTree(subtree)
+          case Some(oldSubtree) => fromTrees(oldSubtree, subtree)
+        }
+    ) ++ oldTree.trees
+      .filterNot(oldTree => newTree.trees.exists(_.name == oldTree.name))
+      .flatMap(tree => Diff.getRemovedFromTree(tree))
+
+    val diffFromBlobs = newTree.blobs.flatMap(
+      blob =>
+        oldTree.blobs.find(_.name == blob.name) match {
+          case None =>
+            Some(Diff.addedFile(blob.content, s"${newTree.name}${blob.name}"))
+          case Some(oldBlob) =>
+            Diff.fromContents(
+              oldBlob.content,
+              blob.content,
+              s"${newTree.name}${blob.name}"
+            )
+        }
+    ) ++ oldTree.blobs
+      .filterNot(oldBlob => newTree.blobs.exists(_.name == oldBlob.name))
+      .map(
+        blob => Diff.removedFile(blob.content, s"${oldTree.name}${blob.name}")
+      )
+
+    diffFromTrees ++ diffFromBlobs
+  }
 
   def fromContents(
       oldContent: String,
@@ -96,5 +137,19 @@ object Diff {
     ).reverse
     if (result.isEmpty) None
     else Some(Diff(result, filePath))
+  }
+
+  def addedFile(addedContent: String, filePath: String): Diff = {
+    Diff(
+      addedContent.split("\n").map(line => Change(ChangeType.ADD, line)),
+      filePath
+    )
+  }
+
+  def removedFile(removedContent: String, filePath: String): Diff = {
+    Diff(
+      removedContent.split("\n").map(line => Change(ChangeType.SUB, line)),
+      filePath
+    )
   }
 }

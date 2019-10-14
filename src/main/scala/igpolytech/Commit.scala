@@ -10,9 +10,9 @@ case class Commit(
     author: String,
     timestamp: Instant = Instant.now()
 ) {
-  lazy val title: String = {
-    title.split("\n")(0) match {
-      case str: String if str.length >= 50 => str.substring(50)
+  def title: String = {
+    text.split("\n")(0) match {
+      case str: String if str.length >= 50 => str.slice(0, 51)
       case str                             => str
     }
   }
@@ -29,6 +29,7 @@ case class Commit(
       <author>{author}</author>
       <text>{text}</text>
       <tree>{treeHash}</tree>
+      <timestamp>{timestamp}</timestamp>
     </Commit>
   }
 
@@ -49,8 +50,9 @@ object Commit {
     val text = (xmlContent \ "text").text
     val parentHash = (xmlContent \ "parent").text
     val author = (xmlContent \ "author").text
-    val treeHash = (xmlContent \ "treeHash").text
-    new Commit(treeHash, parentHash, text, author)
+    val treeHash = (xmlContent \ "tree").text
+    val timestamp = Instant.parse((xmlContent \ "timestamp").text)
+    new Commit(treeHash, parentHash, text, author, timestamp)
 
   }
 }
