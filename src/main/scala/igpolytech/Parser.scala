@@ -82,13 +82,13 @@ object Parser extends App {
             .text("show hash and commit subject line for each branch's head"),
           checkConfig(
             c =>
-              if (c.displayAll && c.givenName != "")
+              if (c.mode == "branch" && c.displayAll && c.givenName != "")
                 failure("'all' option does not make sense with a branch name")
-              else if (c.verbose && c.givenName != "")
+              else if (c.mode == "branch" && c.verbose && c.givenName != "")
                 failure(
                   "'verbose' option does not make sense with a branch name"
                 )
-              else if (!c.displayAll && !c.verbose && c.givenName == "")
+              else if (c.mode == "branch" && !c.displayAll && !c.verbose && c.givenName == "")
                 failure(
                   "You must either put a name or an option. See sgit --help for help"
                 )
@@ -97,7 +97,13 @@ object Parser extends App {
         ),
       cmd("tag")
         .action((_, c) => c.copy(mode = "tag"))
-        .text("TODO"),
+        .text("create a new tag (list if no name is given)")
+        .children(
+          arg[String]("name")
+            .optional()
+            .action((x, c) => c.copy(givenName = x))
+            .text("name of the tag")
+        ),
       cmd("checkout")
         .action((_, c) => c.copy(mode = "checkout"))
         .text("TODO"),
@@ -135,9 +141,11 @@ object Parser extends App {
                   if (config.displayAll || config.verbose)
                     println(repo.listBranch(config.displayAll, config.verbose))
                   else println(repo.createBranch(config.givenName))
-                case "log"      => println("Not yet implemented")
-                case "diff"     => println("Not yet implemented")
-                case "tag"      => println("Not yet implemented")
+                case "log"  => println("Not yet implemented")
+                case "diff" => println("Not yet implemented")
+                case "tag" =>
+                  if (config.givenName == "") println(repo.listTags())
+                  else println(repo.createTag(config.givenName))
                 case "status"   => println(repo.getStatus())
                 case "merge"    => println("Not yet implemented")
                 case "rebase"   => println("Not yet implemented")

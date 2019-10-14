@@ -10,6 +10,7 @@ case class Repo(repoDir: String) {
   val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
   val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
   val branchesPath = s"${repoDir}${File.separator}branches${File.separator}"
+  val tagsPath = s"${repoDir}${File.separator}tags${File.separator}"
   val headPath = s"${repoDir}${File.separator}HEAD"
 
   def getStatus(): String = {
@@ -165,12 +166,28 @@ case class Repo(repoDir: String) {
   def listBranch(all: Boolean, verbose: Boolean): String = {
     FilesIO.getAllFilesPath(branchesPath).mkString
   }
+
   def createBranch(branchName: String): String = {
     if (FilesIO.fileExists(s"${branchesPath}$branchName"))
       "Sorry branch name is already used"
     else {
       FilesIO.write(s"${branchesPath}$branchName", FilesIO.getContent(headPath))
       s"Branch $branchName created"
+    }
+  }
+
+  def listTags(): String = {
+    val tags = FilesIO.getAllFilesPath(tagsPath)
+    if (!tags.isEmpty) s"Tags:\n - ${tags.mkString("\n - ")}"
+    else "No tags created. See sgit tag <name> to create one"
+  }
+
+  def createTag(tagName: String): String = {
+    if (FilesIO.fileExists(s"${tagsPath}$tagName"))
+      "Sorry tag name is already used"
+    else {
+      FilesIO.write(s"${tagsPath}$tagName", FilesIO.getContent(headPath))
+      s"Tag $tagName created"
     }
   }
 }
