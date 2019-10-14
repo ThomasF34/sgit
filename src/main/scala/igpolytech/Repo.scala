@@ -8,14 +8,20 @@ case class Repo(repoDir: String) {
 
   val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
   val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
+  val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
+  val headPath = s"${repoDir}${File.separator}HEAD"
 
   def getStatus(): String = {
     s"# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
   }
 
   def getLastCommit(): Option[Commit] = {
-    val hash = FilesIO.getHash(s"${repoDir}${File.separator}HEAD")
-    hash.map(value => Commit.getCommit(value))
+    val hashOption = FilesIO.getHash(headPath)
+    hashOption.map(hash => Commit.getCommit(hash, commitsPath))
+  }
+
+  def setLastCommit(commitHash: String) = {
+    FilesIO.write(headPath, commitHash)
   }
 
   private def getStaggedStatus(): String = {
@@ -23,33 +29,28 @@ case class Repo(repoDir: String) {
     hash match {
       case None => "-- Nothing in stage --"
       case Some(treeHash) => {
-        val tree: Tree =
+        val stageTree: Tree =
           Tree.getTree(
             treesPath,
             blobsPath,
             treeHash
           )
-        tree.getAllFiles().mkString("\n")
+        getLastCommit() match {
+          case Some(commit) => {
+            val commitTree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
+            val diff = Diff.fromTrees(commitTree, stageTree)
+            if (diff.isEmpty) "-- Nothing in stage --"
+            else diff.mkString("\n")
+          }
+          case None => {
+            Diff.getAddedFromTree(stageTree).mkString("\n")
+          }
+        }
       }
     }
   }
 
   private def getModifiedStatus(): String = {
-    // Modified =
-    //if no stage => compare actual workdir with last commit
-    //if stage => compare actual workdir with stage
-    // If no stage && no last commit => nothing
-    // val comparedTree = getStage match {
-    //   case Some(value) => Some(value)
-    //   case None =>
-    //     getLastCommit().map(_.tree)
-    // }
-
-    // comparedTree match {
-    //   case Some(tree) => "Will print diff"
-    //   case None       => "-- Nothing modified --"
-    // }
-
     getStage() match {
       case Some(stage) => {
         val diff = stage.getModified(projectDir, blobsPath)
@@ -81,11 +82,60 @@ case class Repo(repoDir: String) {
     // If no stage -> volatile tree = stage (means no commit had been done)
     // If stage -> merge volatile tree with stage tree
     //WARNING WHEN COMMIT DO NOT RESET STAGE. WE WONT BE ABLE TO COMPARE WITH STAGE IF RESETED
-    getStage match {
+    getStage() match {
       case Some(stage) => setStage(stage.mergeTree(volatileTree))
       case None        => setStage(volatileTree)
     }
     "Changes added"
+  }
+
+  def commit() = {
+
+    def checkMessageAndCommitTree(
+        stage: Tree,
+        lastCommitHash: String
+    ): String = {
+      //Before commiting a tree we need to ask for a commit text
+      val commitTextPath = s"${repoDir}${File.separator}CommitMessage"
+      if (FilesIO.fileExists(commitTextPath)) {
+        val commitMessage = FilesIO.getContent(commitTextPath)
+        FilesIO.delete(commitTextPath)
+        commitWithMessage(
+          commitMessage,
+          "NO AUTOR FOR NOW TODO",
+          stage,
+          lastCommitHash
+        )
+      } else {
+        FilesIO.createFiles(Array(commitTextPath))
+        s"Please edit the commit message file with the commit message and use the commit command again \n Commit Message file is located at ${commitTextPath}"
+      }
+    }
+
+    def commitWithMessage(
+        text: String,
+        author: String,
+        stage: Tree,
+        lastCommitHash: String
+    ): String = {
+      val commit = Commit(stage.hash, lastCommitHash, text, author)
+      commit.save(commitsPath)
+      setLastCommit(commit.hash)
+      s"Change commited : ${commit.title}"
+    }
+
+    //Check if there is something to commit then check message and commit
+    (getStage(), getLastCommit()) match {
+      case (Some(stage), Some(commit)) => {
+        val tree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
+        if (Diff.fromTrees(stage, tree).isEmpty)
+          "Sorry, nothing is to be commited. Use sgit add before commiting"
+        else checkMessageAndCommitTree(stage, tree.hash)
+      }
+      case (Some(stage), None) => checkMessageAndCommitTree(stage, "")
+      case (None, _) =>
+        "Sorry, nothing is to be commited. Use sgit add before commiting"
+    }
   }
 
   def getStage(): Option[Tree] = {

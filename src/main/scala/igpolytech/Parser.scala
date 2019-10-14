@@ -126,7 +126,7 @@ object Parser extends App {
               val repo: Repo = new Repo(value)
               config.mode match {
                 case "add"      => println(repo.add(config.files))
-                case "commit"   => println("Not yet implemented")
+                case "commit"   => println(repo.commit())
                 case "branch"   => println("Not yet implemented")
                 case "log"      => println("Not yet implemented")
                 case "diff"     => println("Not yet implemented")

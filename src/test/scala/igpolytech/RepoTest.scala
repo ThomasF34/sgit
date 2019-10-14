@@ -46,14 +46,6 @@ class RepoTest extends FunSpec {
     }
   }
 
-  describe("Commit handling") {
-    it("shouldn't get commit from empty HEAD") {
-      Repo.init(".")
-      val repo = Repo(".sgit")
-      FilesIO.write(s".sgit${File.separator}HEAD", "")
-      assert(repo.getLastCommit().isEmpty)
-    }
-  }
   describe("Stage handling") {
     it("should get Tree from STAGE") {
       Repo.init(".")
