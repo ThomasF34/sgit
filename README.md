@@ -5,17 +5,17 @@ Git-like CLI in scala
 ---
 
 - [x] init
-- [x] status  **Must check empty root tree**
-- [x] add
-- [ ] commit
-- [x] diff :warning: **Must create diff from tree**
+- [x] status
+- [x] add **Must check add non existing file and removed file**
+- [x] commit
+- [x] diff
 - [ ] log
 - [ ] log p
 - [ ] log stat
-- [ ] branch
-- [ ] branch av
-- [ ] tag
-- [ ] checkout
+- [ ] branch :hammer:
+- [ ] branch av :hammer:
+- [ ] tag :hammer:
+- [ ] checkout :hammer:
 - [ ] merge :warning:
 - [ ] rebase
 - [ ] rebase i
