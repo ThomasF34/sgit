@@ -9,6 +9,7 @@ case class Repo(repoDir: String) {
   val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
   val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
   val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
+  val branchesPath = s"${repoDir}${File.separator}branches${File.separator}"
   val headPath = s"${repoDir}${File.separator}HEAD"
 
   def getStatus(): String = {
@@ -160,6 +161,18 @@ case class Repo(repoDir: String) {
 
   def allFiles: Array[String] =
     FilesIO.getAllFilesPath(projectDir)
+
+  def listBranch(all: Boolean, verbose: Boolean): String = {
+    FilesIO.getAllFilesPath(branchesPath).mkString
+  }
+  def createBranch(branchName: String): String = {
+    if (FilesIO.fileExists(s"${branchesPath}$branchName"))
+      "Sorry branch name is already used"
+    else {
+      FilesIO.write(s"${branchesPath}$branchName", FilesIO.getContent(headPath))
+      s"Branch $branchName created"
+    }
+  }
 }
 
 object Repo {

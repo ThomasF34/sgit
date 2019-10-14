@@ -97,6 +97,10 @@ object FilesIO {
     file.delete()
   }
 
+  /**
+    * Write the content in the given file.
+    * File will be created if does not exist
+    */
   def write(path: String, content: String) = {
     val file = new File(path)
     if (!file.exists()) {

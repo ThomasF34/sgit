@@ -71,7 +71,7 @@ object Parser extends App {
         .text("create a new branch")
         .children(
           arg[String]("name")
-            .required()
+            .optional()
             .action((x, c) => c.copy(givenName = x))
             .text("name of the branch"),
           opt[Unit]('a', "all")
@@ -87,6 +87,10 @@ object Parser extends App {
               else if (c.verbose && c.givenName != "")
                 failure(
                   "'verbose' option does not make sense with a branch name"
+                )
+              else if (!c.displayAll && !c.verbose && c.givenName == "")
+                failure(
+                  "You must either put a name or an option. See sgit --help for help"
                 )
               else success
           )
@@ -125,9 +129,12 @@ object Parser extends App {
             case Some(value) => {
               val repo: Repo = new Repo(value)
               config.mode match {
-                case "add"      => println(repo.add(config.files))
-                case "commit"   => println(repo.commit())
-                case "branch"   => println("Not yet implemented")
+                case "add"    => println(repo.add(config.files))
+                case "commit" => println(repo.commit())
+                case "branch" =>
+                  if (config.displayAll || config.verbose)
+                    println(repo.listBranch(config.displayAll, config.verbose))
+                  else println(repo.createBranch(config.givenName))
                 case "log"      => println("Not yet implemented")
                 case "diff"     => println("Not yet implemented")
                 case "tag"      => println("Not yet implemented")
