@@ -96,4 +96,18 @@ class RepoTest extends FunSpec with Matchers {
       )
     }
   }
+
+  describe("Checkout handling") {
+    it("should not checkout if modified files") {
+      pending
+    }
+
+    it("should not checkout if untracked files") {
+      pending
+    }
+
+    it("shoud remove old and create new files") {
+      pending
+    }
+  }
 }

@@ -103,6 +103,13 @@ object FilesIO {
     file.delete()
   }
 
+  def deleteFile(path: String) = {
+    val file = new File(path)
+    if (file.isFile()) file.delete()
+  }
+
+  def deleteFiles(paths: Array[String]) = paths.map(deleteFile(_))
+
   /**
     * Write the content in the given file.
     * File will be created if does not exist

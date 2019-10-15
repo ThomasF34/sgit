@@ -4,6 +4,10 @@ case class Tag(name: String, hash: String) {
   def save(tagsPath: String) = {
     FilesIO.write(s"${tagsPath}$name", hash)
   }
+
+  def getCommit(commitsPath: String): Option[Commit] =
+    Commit.getCommitOption(hash, commitsPath)
+
 }
 
 object Tag {

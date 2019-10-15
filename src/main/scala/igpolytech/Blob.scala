@@ -9,6 +9,8 @@ case class Blob(name: String, getContent: () => String) {
     FilesIO.write(s"${dirPath}${hash}", content)
   }
 
+  def writeBlob(dirPath: String) = FilesIO.write(s"${dirPath}$name", content)
+
   def getDiffWithNew(
       projectDir: String,
       treeName: String,

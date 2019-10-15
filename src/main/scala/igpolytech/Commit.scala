@@ -39,10 +39,18 @@ case class Commit(
 }
 
 object Commit {
+  def getCommitOption(hash: String, commitsDirPath: String): Option[Commit] = {
+    if (Commit.exists(hash, commitsDirPath))
+      Some(getCommit(hash, commitsDirPath))
+    else None
+  }
   def getCommit(hash: String, commitsDirPath: String): Commit = {
     val xml = FilesIO.loadXml(s"${commitsDirPath}${hash}")
     getCommit(xml)
   }
+
+  def exists(hash: String, commitsDirPath: String): Boolean =
+    FilesIO.fileExists(s"${commitsDirPath}$hash")
 
   def getCommit(
       xmlContent: Node
