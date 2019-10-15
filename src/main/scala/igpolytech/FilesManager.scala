@@ -48,6 +48,12 @@ object FilesIO {
     }
   }
 
+  def emptyFile(filePath: String): Boolean = {
+    val file = new File(filePath)
+    val reader: BufferedReader = new BufferedReader(new FileReader(file))
+    reader.readLine() == null
+  }
+
   def getHash(filePath: String): Option[String] = {
     val file = new File(filePath)
     val reader: BufferedReader = new BufferedReader(new FileReader(file))

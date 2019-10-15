@@ -44,6 +44,13 @@ class RepoTest extends FunSpec {
       val res = Repo.init(".")
       assert(res == "Sorry, a sgit repository is already initialized")
     }
+
+    it("should get empty head when initialized") {
+      Repo.init(".")
+      val repo: Repo = new Repo(".sgit")
+
+      assert(repo.head.isEmpty)
+    }
   }
 
   describe("Stage handling") {

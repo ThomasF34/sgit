@@ -2,16 +2,17 @@ package igpolytech
 import java.io.File
 
 case class Repo(repoDir: String) {
-  val projectDir = repoDir match {
-    case s"${value}.sgit" => value
-  }
-
   val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
   val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
   val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
   val branchesPath = s"${repoDir}${File.separator}branches${File.separator}"
   val tagsPath = s"${repoDir}${File.separator}tags${File.separator}"
   val headPath = s"${repoDir}${File.separator}HEAD"
+
+  lazy val head: Option[Head] = Head.fromHeadFile(headPath, commitsPath)
+  val projectDir = repoDir match {
+    case s"${value}.sgit" => value
+  }
 
   def getStatus(): String = {
     s"# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"

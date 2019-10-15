@@ -5,6 +5,10 @@ import scala.xml.Node
 case class Head(mode: String, commit: Commit) {
   def save(headPath: String) = FilesIO.saveXml(this.toXml(), headPath)
 
+  def update(newCommit: Commit): Head = {
+    Head(mode, newCommit)
+  }
+
   def toXml(): Node = <Head mode={mode}>{commit.hash}</Head>
 }
 
@@ -28,10 +32,13 @@ object Head {
     } else None
   }
 
-  def fromHeadFile(headPath: String, commitsPath: String) = {
-    val xml = FilesIO.loadXml(headPath)
-    val mode = (xml \@ "mode")
-    val commitRef = (xml).text
-    Head(mode, Commit.getCommit(commitRef, commitsPath))
+  def fromHeadFile(headPath: String, commitsPath: String): Option[Head] = {
+    if (FilesIO.emptyFile(headPath)) None
+    else {
+      val xml = FilesIO.loadXml(headPath)
+      val mode = (xml \@ "mode")
+      val commitRef = (xml).text
+      Some(Head(mode, Commit.getCommit(commitRef, commitsPath)))
+    }
   }
 }
