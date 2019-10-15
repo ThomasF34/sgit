@@ -22,7 +22,9 @@ case class Repo(repoDir: String) {
     head.mode match {
       case "branch" => s"You're on branch ${head.content}"
       case "detached" =>
-        s"${Console.RED}${Console.BOLD}!! CAREFUL !! You're on detached mode !${Console.RESET}\n The commit title you're on is '${Commit.getCommit(head.content, commitsPath).title}'"
+        s"${Console.RED}${Console.BOLD}!! CAREFUL !! You're on detached mode !${Console.RESET}\nThe commit title you're on is '${Console.BOLD}${Commit
+          .getCommit(head.content, commitsPath)
+          .title}${Console.RESET}'"
     }
   }
 
@@ -32,6 +34,10 @@ case class Repo(repoDir: String) {
 
   def setLastCommit(newCommitHash: String) = {
     head.update(newCommitHash, branchesPath).save(headPath)
+  }
+
+  def setHead(headMode: String, commitHash: String) {
+    Head(headMode, commitHash).save(headPath)
   }
 
   private def getStaggedStatus(): String = {
@@ -180,7 +186,10 @@ case class Repo(repoDir: String) {
     if (FilesIO.fileExists(s"${branchesPath}$branchName"))
       "Sorry branch name is already used"
     else {
-      FilesIO.write(s"${branchesPath}$branchName", FilesIO.getContent(headPath))
+      FilesIO.write(s"${branchesPath}$branchName", getLastCommit() match {
+        case None         => ""
+        case Some(commit) => commit.hash
+      })
       s"Branch $branchName created"
     }
   }
@@ -203,45 +212,70 @@ case class Repo(repoDir: String) {
   def checkout(to: String): String = {
     //First checking if there's anything modified
     getStage() match {
-      case Some(stage) =>
-        if (stage.getModified(projectDir, blobsPath).isEmpty) {
-          val toCommitOption = Commit
-            .getCommitOption(to, commitsPath)
-            .orElse(
+      case Some(stage) => {
+        val lastCommitTree =
+          Tree.getTree(treesPath, blobsPath, getLastCommit().get.treeHash)
+        if (stage
+              .getModified(projectDir, blobsPath)
+              .isEmpty && Diff.fromTrees(lastCommitTree, stage).isEmpty) {
+          val toCommitOption = Commit.getCommitOption(to, commitsPath)
+          val commitWithHeadMode = toCommitOption match {
+            case Some(commit) => Some((commit, "detached"))
+            case None => {
               Branch
                 .getBranchOption(to, branchesPath)
-                .flatMap(_.getLastCommit(commitsPath))
-            )
-            .orElse(
-              Tag.fromName(to, tagsPath).flatMap(_.getCommit(commitsPath))
-            )
-          toCommitOption match {
-            case Some(commit) => checkout(stage, commit)
-            case None         => "fatal: Cannot find the reference you gave"
+                .flatMap(_.getLastCommit(commitsPath)) match {
+                case Some(branchCommit) => {
+                  Some((branchCommit, to))
+                }
+                case None => {
+                  Tag
+                    .fromName(to, tagsPath)
+                    .flatMap(_.getCommit(commitsPath))
+                    .map(tagCommit => (tagCommit, "detached"))
+                }
+              }
+            }
           }
-
+          commitWithHeadMode match {
+            case Some((commit, headMode)) => {
+              checkout(stage, commit, headMode)
+            }
+            case None => "fatal: Cannot find the reference you gave"
+          }
         } else {
           "fatal: Please commit your work before checking out other branch/commit/tag"
         }
+      }
       case None =>
         "fatal: You cannot checkout just after initializing your sgit repository"
     }
   }
 
-  def checkout(actualStage: Tree, commit: Commit): String = {
+  def checkout(actualStage: Tree, commit: Commit, head: String): String = {
     //Need to check if all actual untracked file are contained in destination commit. If so fatal message
     val destinationTree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
     val destinationFiles =
       destinationTree.getAllFiles()
     val untracked = getUntracked()
-    val diff = untracked.diff(destinationFiles)
+    val diff = untracked.intersect(destinationFiles)
     if (!diff.isEmpty)
       s"fatal: The following untracked working tree files would be overwritten by checkout: \n${diff
         .mkString("\n")}\nPlease move or remove them before you switch branches. ${Console.RED}${Console.BOLD}Aborting${Console.RESET}"
     else {
       FilesIO.deleteFiles(actualStage.getAllFiles())
       destinationTree.createAllFiles(projectDir)
-      s"You're now at commit ${commit.title}"
+      setStage(destinationTree)
+      head match {
+        case "detached" => {
+          setHead(head, commit.hash)
+          s"CAREFUL ${Console.RED}You're on detached mode${Console.RESET}\nYou're now at commit ${commit.title}"
+        }
+        case branchName => {
+          setHead("branch", head)
+          s"You're now at commit ${commit.title}"
+        }
+      }
     }
   }
 }
