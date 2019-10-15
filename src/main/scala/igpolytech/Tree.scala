@@ -79,6 +79,11 @@ case class Tree(
     s"${name}${trees.map(_.name).mkString}${blobs.mkString}"
 
   def equals(tree: Tree): Boolean = this.hash.equals(tree.hash)
+
+  def createAllFiles(projectDir: String): Unit = {
+    trees.map(_.createAllFiles(projectDir))
+    blobs.map(_.writeBlob(s"${projectDir}$name"))
+  }
 }
 
 object Tree {

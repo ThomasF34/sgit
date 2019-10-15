@@ -71,12 +71,13 @@ case class Repo(repoDir: String) {
     }
   }
 
-  private def getUntrackedStatus(): String = {
-    val files: Array[String] = getStage() match {
+  def getUntracked(): Array[String] =
+    getStage() match {
       case None        => allFiles
       case Some(stage) => allFiles.diff(stage.getAllFiles())
     }
-
+  private def getUntrackedStatus(): String = {
+    val files = getUntracked()
     if (files.isEmpty) "-- Nothing is untracked --"
     else files.mkString("\n")
   }
@@ -196,6 +197,51 @@ case class Repo(repoDir: String) {
     else {
       Tag(tagName, FilesIO.getContent(headPath)).save(tagsPath)
       s"Tag $tagName created"
+    }
+  }
+
+  def checkout(to: String): String = {
+    //First checking if there's anything modified
+    getStage() match {
+      case Some(stage) =>
+        if (stage.getModified(projectDir, blobsPath).isEmpty) {
+          val toCommitOption = Commit
+            .getCommitOption(to, commitsPath)
+            .orElse(
+              Branch
+                .getBranchOption(to, branchesPath)
+                .flatMap(_.getLastCommit(commitsPath))
+            )
+            .orElse(
+              Tag.fromName(to, tagsPath).flatMap(_.getCommit(commitsPath))
+            )
+          toCommitOption match {
+            case Some(commit) => checkout(stage, commit)
+            case None         => "fatal: Cannot find the reference you gave"
+          }
+
+        } else {
+          "fatal: Please commit your work before checking out other branch/commit/tag"
+        }
+      case None =>
+        "fatal: You cannot checkout just after initializing your sgit repository"
+    }
+  }
+
+  def checkout(actualStage: Tree, commit: Commit): String = {
+    //Need to check if all actual untracked file are contained in destination commit. If so fatal message
+    val destinationTree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
+    val destinationFiles =
+      destinationTree.getAllFiles()
+    val untracked = getUntracked()
+    val diff = untracked.diff(destinationFiles)
+    if (!diff.isEmpty)
+      s"fatal: The following untracked working tree files would be overwritten by checkout: \n${diff
+        .mkString("\n")}\nPlease move or remove them before you switch branches. ${Console.RED}${Console.BOLD}Aborting${Console.RESET}"
+    else {
+      FilesIO.deleteFiles(actualStage.getAllFiles())
+      destinationTree.createAllFiles(projectDir)
+      s"You're now at commit ${commit.title}"
     }
   }
 }

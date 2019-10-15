@@ -14,6 +14,10 @@ case class Branch(name: String, commitHash: String) {
 }
 
 object Branch {
+  def getBranchOption(name: String, branchesPath: String): Option[Branch] =
+    if (branchExists(name, branchesPath))
+      Some(fromBranchName(name, branchesPath))
+    else None
   def fromBranchName(name: String, branchesPath: String): Branch = {
     Branch(name, FilesIO.getContent(s"${branchesPath}$name"))
   }

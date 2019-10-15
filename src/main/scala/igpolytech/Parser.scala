@@ -106,7 +106,15 @@ object Parser extends App {
         ),
       cmd("checkout")
         .action((_, c) => c.copy(mode = "checkout"))
-        .text("TODO"),
+        .text(
+          "Goes to a given branch, tag or commit. Commit is given as a hash, branch and tag as a name. Commit will be taken in priority then branch then tag"
+        )
+        .children(
+          arg[String]("name")
+            .required()
+            .action((x, c) => c.copy(givenName = x))
+            .text("hash of the commit or name of the branch/tag")
+        ),
       cmd("merge")
         .action((_, c) => c.copy(mode = "merge"))
         .text("TODO"),
@@ -149,7 +157,7 @@ object Parser extends App {
                 case "status"   => println(repo.getStatus())
                 case "merge"    => println("Not yet implemented")
                 case "rebase"   => println("Not yet implemented")
-                case "checkout" => println("Not yet implemented")
+                case "checkout" => println(repo.checkout(config.givenName))
               }
             }
           }
