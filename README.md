@@ -15,7 +15,7 @@ Git-like CLI in scala
 - [x] branch
 - [ ] branch av :hammer:
 - [x] tag
-- [ ] checkout :hammer:
+- [x] checkout **must test (fixture?)**
 - [ ] merge :warning:
 - [ ] rebase
 - [ ] rebase i
