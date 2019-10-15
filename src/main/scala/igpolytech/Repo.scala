@@ -218,6 +218,7 @@ case class Repo(repoDir: String) {
         if (stage
               .getModified(projectDir, blobsPath)
               .isEmpty && Diff.fromTrees(lastCommitTree, stage).isEmpty) {
+          //Only then we checkout
           val toCommitOption = Commit.getCommitOption(to, commitsPath)
           val commitWithHeadMode = toCommitOption match {
             case Some(commit) => Some((commit, "detached"))
