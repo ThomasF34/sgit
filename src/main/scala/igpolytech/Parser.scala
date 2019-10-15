@@ -150,7 +150,7 @@ object Parser extends App {
                     println(repo.listBranch(config.displayAll, config.verbose))
                   else println(repo.createBranch(config.givenName))
                 case "log"  => println("Not yet implemented")
-                case "diff" => println("Not yet implemented")
+                case "diff" => println(repo.diff())
                 case "tag" =>
                   if (config.givenName == "") println(repo.listTags())
                   else println(repo.createTag(config.givenName))

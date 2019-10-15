@@ -36,9 +36,8 @@ case class Repo(repoDir: String) {
     head.update(newCommitHash, branchesPath).save(headPath)
   }
 
-  def setHead(headMode: String, commitHash: String) {
+  def setHead(headMode: String, commitHash: String) =
     Head(headMode, commitHash).save(headPath)
-  }
 
   private def getStaggedStatus(): String = {
     val hash = FilesIO.getHash(s"${repoDir}${File.separator}STAGE")
@@ -206,6 +205,18 @@ case class Repo(repoDir: String) {
     else {
       Tag(tagName, FilesIO.getContent(headPath)).save(tagsPath)
       s"Tag $tagName created"
+    }
+  }
+
+  def diff(): String = {
+    getStage() match {
+      case None => "No diff"
+      case Some(stage) =>
+        val modified = stage
+          .getModified(projectDir, blobsPath)
+
+        if (modified.isEmpty) "No diff"
+        else modified.map(_.getDetails).mkString("\n")
     }
   }
 

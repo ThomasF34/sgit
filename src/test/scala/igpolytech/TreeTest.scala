@@ -132,10 +132,10 @@ class TreeTest extends FunSpec with Matchers {
         assert(diff.isDefined)
         assert(diff.get.changes.length == 2)
         assert(
-          diff.get.changes.contains(Change(ChangeType.ADD, "Pixar is best"))
+          diff.get.changes.contains(Change(ChangeType.ADD, "Pixar is best", 2))
         )
         assert(
-          diff.get.changes.contains(Change(ChangeType.SUB, "Disney is best"))
+          diff.get.changes.contains(Change(ChangeType.SUB, "Disney is best", 2))
         )
       }
     }

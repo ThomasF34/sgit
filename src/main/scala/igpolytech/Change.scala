@@ -7,9 +7,10 @@ object ChangeType extends Enumeration {
 }
 import ChangeType._
 
-case class Change(changeType: ChangeType, line: String) {
+case class Change(changeType: ChangeType, line: String, lineNumber: Int) {
   override def toString(): String = {
-    if (changeType == ADD) s"${Console.GREEN}+ ${line}${Console.RESET}"
-    else s"${Console.RED}- ${line}${Console.RESET}"
+    if (changeType == ADD)
+      s"${lineNumber}: ${Console.GREEN}+ ${line}${Console.RESET}"
+    else s"${lineNumber}: ${Console.RED}- ${line}${Console.RESET}"
   }
 }
