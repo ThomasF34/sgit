@@ -13,6 +13,20 @@ case class Diff(changes: Array[Change], filePath: String) {
   def getDetails(): String = {
     s"diff on $filePath:\n${changes.mkString("\n")}\n"
   }
+
+  def getStats(): String = {
+    changes.foldLeft((0, 0))(
+      (acc, change) =>
+        change.changeType match {
+          case ChangeType.ADD => (acc._1 + 1, acc._2)
+          case ChangeType.SUB => (acc._1, acc._2 + 1)
+        }
+    ) match {
+      case (add, sub) if add - sub > 0 =>
+        s"$filePath ${Console.GREEN}${add - sub}${Console.RESET}"
+      case (add, sub) => s"$filePath ${Console.RED}${add - sub}${Console.RESET}"
+    }
+  }
 }
 
 object Diff {
@@ -66,7 +80,6 @@ object Diff {
       newContent: String,
       filePath: String
   ): Option[Diff] = {
-
     @tailrec
     def lcsLength[T](
         l1: List[T],

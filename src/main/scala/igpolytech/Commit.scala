@@ -36,6 +36,75 @@ case class Commit(
   def save(commitsDirPath: String): Unit = {
     FilesIO.saveXml(this.toXml(), s"${commitsDirPath}${hash}")
   }
+
+  def getDetails(
+      withStats: Boolean,
+      withDiff: Boolean,
+      pathTreeDir: String,
+      pathBlobDir: String,
+      commitsDir: String
+  ): String = {
+    val base =
+      s"commit $hash\nAuthor: $author\nDate: ${timestamp.toString()}\n$text\n"
+
+    (withStats, withDiff) match {
+      case (true, true) =>
+        s"${base}Stats:\n${getStats(pathTreeDir, pathBlobDir, commitsDir)
+          .mkString("\n")}\n\nDiff:\n${getDetailedDiff(
+          pathTreeDir,
+          pathBlobDir,
+          commitsDir
+        ).mkString("\n")}\n===="
+      case (true, false) =>
+        s"${base}Stats:\n${getStats(pathTreeDir, pathBlobDir, commitsDir).mkString("\n")}\n===="
+      case (false, true) =>
+        s"${base}Diff:\n${getDetailedDiff(
+          pathTreeDir,
+          pathBlobDir,
+          commitsDir
+        ).mkString("\n")}\n===="
+      case (false, false) => s"$base\n===="
+    }
+  }
+
+  private def getDiffWithParent(
+      pathTreeDir: String,
+      pathBlobDir: String,
+      commitsDir: String
+  ): Array[Diff] = {
+    if (parentHash != "") {
+      val tree = Tree.getTree(pathTreeDir, pathBlobDir, treeHash)
+      val parentTree = Tree.getTree(
+        pathTreeDir,
+        pathBlobDir,
+        Commit.getCommit(parentHash, commitsDir).treeHash
+      )
+      Diff.fromTrees(parentTree, tree)
+    } else {
+      Array()
+    }
+  }
+
+  private def getDetailedDiff(
+      pathTreeDir: String,
+      pathBlobDir: String,
+      commitsDir: String
+  ): Array[String] = {
+    val diff =
+      getDiffWithParent(pathTreeDir, pathBlobDir, commitsDir).map(_.getDetails)
+    if (diff.isEmpty) Array("-- No diff --")
+    else diff
+  }
+  private def getStats(
+      pathTreeDir: String,
+      pathBlobDir: String,
+      commitsDir: String
+  ): Array[String] = {
+    val stats =
+      getDiffWithParent(pathTreeDir, pathBlobDir, commitsDir).map(_.getStats)
+    if (stats.isEmpty) Array("-- No diff --")
+    else stats
+  }
 }
 
 object Commit {

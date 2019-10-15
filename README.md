@@ -9,9 +9,9 @@ Git-like CLI in scala
 - [x] add **Must check add non existing file and removed file**
 - [x] commit
 - [x] diff
-- [ ] log
-- [ ] log p
-- [ ] log stat
+- [x] log
+- [x] log p
+- [x] log stat
 - [x] branch
 - [ ] branch av :hammer:
 - [x] tag

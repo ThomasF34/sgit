@@ -93,8 +93,6 @@ case class Repo(repoDir: String) {
       projectDir
     )
 
-    volatileTree.toString()
-
     // If no stage -> volatile tree = stage (means no commit had been done)
     // If stage -> merge volatile tree with stage tree
     //WARNING WHEN COMMIT DO NOT RESET STAGE. WE WONT BE ABLE TO COMPARE WITH STAGE IF RESETED
@@ -146,7 +144,7 @@ case class Repo(repoDir: String) {
         val tree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
         if (Diff.fromTrees(stage, tree).isEmpty)
           "Sorry, nothing is to be commited. Use sgit add before commiting"
-        else checkMessageAndCommitTree(stage, tree.hash)
+        else checkMessageAndCommitTree(stage, commit.hash)
       }
       case (Some(stage), None) => checkMessageAndCommitTree(stage, "")
       case (None, _) =>
@@ -217,6 +215,31 @@ case class Repo(repoDir: String) {
 
         if (modified.isEmpty) "No diff"
         else modified.map(_.getDetails).mkString("\n")
+    }
+  }
+
+  def log(withStats: Boolean, withDiff: Boolean): String = {
+    def loop(commit: Commit, detailList: Array[String]): Array[String] = {
+      if (commit.parentHash == "")
+        detailList :+ commit.getDetails(
+          withStats,
+          withDiff,
+          treesPath,
+          blobsPath,
+          commitsPath
+        )
+      else
+        loop(
+          Commit.getCommit(commit.parentHash, commitsPath),
+          detailList :+ commit
+            .getDetails(withStats, withDiff, treesPath, blobsPath, commitsPath)
+        )
+    }
+
+    val headCommit = head.getLastCommit(branchesPath, commitsPath)
+    headCommit match {
+      case Some(commit) => loop(commit, Array()).mkString("\n")
+      case None         => "No commit"
     }
   }
 
