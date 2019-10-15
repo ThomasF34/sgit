@@ -177,16 +177,16 @@ case class Repo(repoDir: String) {
   }
 
   def listTags(): String = {
-    val tags = FilesIO.getAllFilesPath(tagsPath)
+    val tags = Tag.allTags(tagsPath)
     if (!tags.isEmpty) s"Tags:\n - ${tags.mkString("\n - ")}"
     else "No tags created. See sgit tag <name> to create one"
   }
 
   def createTag(tagName: String): String = {
-    if (FilesIO.fileExists(s"${tagsPath}$tagName"))
+    if (Tag.exists(tagName, tagsPath))
       "Sorry tag name is already used"
     else {
-      FilesIO.write(s"${tagsPath}$tagName", FilesIO.getContent(headPath))
+      Tag(tagName, FilesIO.getContent(headPath)).save(tagsPath)
       s"Tag $tagName created"
     }
   }
