@@ -11,7 +11,7 @@ case class Diff(changes: Array[Change], filePath: String) {
   }
 
   def getDetails(): String = {
-    changes.mkString("\n")
+    s"diff on $filePath:\n${changes.mkString("\n")}\n"
   }
 }
 
@@ -108,7 +108,7 @@ object Diff {
           l2,
           i,
           j - 1,
-          changes :+ Change(ChangeType.ADD, l2(j - 1).toString())
+          changes :+ Change(ChangeType.ADD, l2(j - 1).toString(), j)
         )
       } else if (i > 0 && (j == 0 || matrix(i)(j - 1) < matrix(i - 1)(j))) {
         printDiff(
@@ -117,7 +117,7 @@ object Diff {
           l2,
           i - 1,
           j,
-          changes :+ Change(ChangeType.SUB, l1(i - 1).toString())
+          changes :+ Change(ChangeType.SUB, l1(i - 1).toString(), i)
         )
       } else {
         changes
@@ -142,14 +142,18 @@ object Diff {
 
   def addedFile(addedContent: String, filePath: String): Diff = {
     Diff(
-      addedContent.split("\n").map(line => Change(ChangeType.ADD, line)),
+      addedContent.split("\n").zipWithIndex.map {
+        case (line, index) => Change(ChangeType.ADD, line, index + 1)
+      },
       filePath
     )
   }
 
   def removedFile(removedContent: String, filePath: String): Diff = {
     Diff(
-      removedContent.split("\n").map(line => Change(ChangeType.SUB, line)),
+      removedContent.split("\n").zipWithIndex.map {
+        case (line, index) => Change(ChangeType.SUB, line, index + 1)
+      },
       filePath
     )
   }

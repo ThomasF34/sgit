@@ -16,11 +16,20 @@ case class Blob(name: String, getContent: () => String) {
       treeName: String,
       blobPath: String
   ): Option[Diff] = {
-    Diff.fromContents(
-      FilesIO.getContent(s"${blobPath}${hash}"),
-      FilesIO.getContent(s"${projectDir}${treeName}${name}"),
-      s"${treeName}$name"
-    )
+    if (FilesIO.fileExists(s"${projectDir}${treeName}${name}")) {
+      Diff.fromContents(
+        FilesIO.getContent(s"${blobPath}${hash}"),
+        FilesIO.getContent(s"${projectDir}${treeName}${name}"),
+        s"${treeName}$name"
+      )
+    } else {
+      Some(
+        Diff.removedFile(
+          FilesIO.getContent(s"${blobPath}${hash}"),
+          s"${treeName}$name"
+        )
+      )
+    }
   }
 
   override def toString(): String = hash
