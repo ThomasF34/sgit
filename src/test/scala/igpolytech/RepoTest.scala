@@ -3,7 +3,7 @@ package igpolytech
 import java.io.File
 import org.scalatest._
 
-class RepoTest extends FunSpec {
+class RepoTest extends FunSpec with Matchers {
   override def withFixture(test: NoArgTest) = {
     try test()
     finally {
@@ -43,6 +43,14 @@ class RepoTest extends FunSpec {
       Repo.init(".")
       val res = Repo.init(".")
       assert(res == "Sorry, a sgit repository is already initialized")
+    }
+
+    it("should get empty head when initialized") {
+      Repo.init(".")
+      val repo: Repo = new Repo(".sgit")
+
+      repo.head.mode shouldBe "branch"
+      repo.head.content shouldBe "master"
     }
   }
 

@@ -15,7 +15,6 @@ class CommitTest extends FunSpec with Matchers {
     it("shouldn't get commit from empty HEAD") {
       Repo.init(".")
       val repo = Repo(".sgit")
-      FilesIO.write(s".sgit${File.separator}HEAD", "")
 
       val res = repo.getLastCommit()
 
@@ -39,7 +38,7 @@ class CommitTest extends FunSpec with Matchers {
       )
     }
 
-    it("should change HEAD when commiting") {
+    it("should change HEAD branches when commiting") {
       Repo.init(".")
       val repo = Repo(".sgit")
       def getFakeContent = () => "toInfinityAndBeyond"
@@ -51,16 +50,19 @@ class CommitTest extends FunSpec with Matchers {
       val res = repo.commit()
 
       val commitOption = repo.getLastCommit()
-      val headHash = FilesIO.getHash(repo.headPath)
+      val branchName = repo.head.content
+      val commitOptionFromBranch = Branch
+        .fromBranchName(branchName, ".sgit/branches/")
+        .getLastCommit(".sgit/commits/")
+      assert(commitOptionFromBranch.isDefined)
       assert(commitOption.isDefined)
-      assert(headHash.isDefined)
       assert(
         res.contains(
           "Change commited : John Lasseter is great"
         )
       )
       commitOption.get.text shouldBe "John Lasseter is great"
-      headHash.get shouldBe commitOption.get.hash
+      commitOptionFromBranch.get.hash shouldBe commitOption.get.hash
     }
 
     it("should not try to commit if nothing is to be commited") {

@@ -5,8 +5,9 @@ case class Diff(changes: Array[Change], filePath: String) {
   override def toString(): String = {
     val (added, subed) = changes.partition(_.changeType == ChangeType.ADD)
     if (added.length > 0 && subed.length > 0) s"modified content -> $filePath"
-    else if (added.length > 0) s"added content -> $filePath"
-    else s"deleted content -> $filePath"
+    else if (added.length > 0)
+      s"${Console.GREEN}added content -> ${filePath}${Console.RESET}"
+    else s"${Console.RED}deleted content -> ${filePath}${Console.RESET}"
   }
 
   def getDetails(): String = {

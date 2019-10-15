@@ -2,26 +2,36 @@ package igpolytech
 import java.io.File
 
 case class Repo(repoDir: String) {
+  val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
+  val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
+  val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
+  val branchesPath = s"${repoDir}${File.separator}branches${File.separator}"
+  val tagsPath = s"${repoDir}${File.separator}tags${File.separator}"
+  val headPath = s"${repoDir}${File.separator}HEAD"
+
+  def head: Head = Head.fromHeadFile(headPath, commitsPath)
   val projectDir = repoDir match {
     case s"${value}.sgit" => value
   }
 
-  val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
-  val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
-  val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
-  val headPath = s"${repoDir}${File.separator}HEAD"
-
   def getStatus(): String = {
-    s"# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
+    s"${getHeadStatus()}\n# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
+  }
+
+  def getHeadStatus(): String = {
+    head.mode match {
+      case "branch" => s"You're on branch ${head.content}"
+      case "detached" =>
+        s"${Console.RED}${Console.BOLD}!! CAREFUL !! You're on detached mode !${Console.RESET}\n The commit title you're on is '${Commit.getCommit(head.content, commitsPath).title}'"
+    }
   }
 
   def getLastCommit(): Option[Commit] = {
-    val hashOption = FilesIO.getHash(headPath)
-    hashOption.map(hash => Commit.getCommit(hash, commitsPath))
+    head.getLastCommit(branchesPath, commitsPath)
   }
 
-  def setLastCommit(commitHash: String) = {
-    FilesIO.write(headPath, commitHash)
+  def setLastCommit(newCommitHash: String) = {
+    head.update(newCommitHash, branchesPath).save(headPath)
   }
 
   private def getStaggedStatus(): String = {
@@ -160,6 +170,34 @@ case class Repo(repoDir: String) {
 
   def allFiles: Array[String] =
     FilesIO.getAllFilesPath(projectDir)
+
+  def listBranch(all: Boolean, verbose: Boolean): String = {
+    FilesIO.getAllFilesPath(branchesPath).mkString
+  }
+
+  def createBranch(branchName: String): String = {
+    if (FilesIO.fileExists(s"${branchesPath}$branchName"))
+      "Sorry branch name is already used"
+    else {
+      FilesIO.write(s"${branchesPath}$branchName", FilesIO.getContent(headPath))
+      s"Branch $branchName created"
+    }
+  }
+
+  def listTags(): String = {
+    val tags = Tag.allTags(tagsPath)
+    if (!tags.isEmpty) s"Tags:\n - ${tags.mkString("\n - ")}"
+    else "No tags created. See sgit tag <name> to create one"
+  }
+
+  def createTag(tagName: String): String = {
+    if (Tag.exists(tagName, tagsPath))
+      "Sorry tag name is already used"
+    else {
+      Tag(tagName, FilesIO.getContent(headPath)).save(tagsPath)
+      s"Tag $tagName created"
+    }
+  }
 }
 
 object Repo {
@@ -177,6 +215,11 @@ object Repo {
       try {
         FilesIO.createDirectories(dirs);
         FilesIO.createFiles(files);
+        FilesIO.write(s"${sgitDir}branches${File.separator}master", "")
+        Head
+          .fromBranchName("master", s"${sgitDir}branches${File.separator}")
+          .get
+          .save(s"${sgitDir}HEAD")
         return "Repo initialized"
       } catch {
         case e: Exception => e.getMessage();
