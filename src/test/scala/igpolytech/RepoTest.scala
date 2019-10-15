@@ -3,7 +3,7 @@ package igpolytech
 import java.io.File
 import org.scalatest._
 
-class RepoTest extends FunSpec {
+class RepoTest extends FunSpec with Matchers {
   override def withFixture(test: NoArgTest) = {
     try test()
     finally {
@@ -49,7 +49,8 @@ class RepoTest extends FunSpec {
       Repo.init(".")
       val repo: Repo = new Repo(".sgit")
 
-      assert(repo.head.isEmpty)
+      repo.head.mode shouldBe "branch"
+      repo.head.content shouldBe "master"
     }
   }
 

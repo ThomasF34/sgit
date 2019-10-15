@@ -9,22 +9,29 @@ case class Repo(repoDir: String) {
   val tagsPath = s"${repoDir}${File.separator}tags${File.separator}"
   val headPath = s"${repoDir}${File.separator}HEAD"
 
-  lazy val head: Option[Head] = Head.fromHeadFile(headPath, commitsPath)
+  def head: Head = Head.fromHeadFile(headPath, commitsPath)
   val projectDir = repoDir match {
     case s"${value}.sgit" => value
   }
 
   def getStatus(): String = {
-    s"# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
+    s"${getHeadStatus()}\n# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
+  }
+
+  def getHeadStatus(): String = {
+    head.mode match {
+      case "branch" => s"You're on branch ${head.content}"
+      case "detached" =>
+        s"${Console.RED}${Console.BOLD}!! CAREFUL !! You're on detached mode !${Console.RESET}\n The commit title you're on is '${Commit.getCommit(head.content, commitsPath).title}'"
+    }
   }
 
   def getLastCommit(): Option[Commit] = {
-    val hashOption = FilesIO.getHash(headPath)
-    hashOption.map(hash => Commit.getCommit(hash, commitsPath))
+    head.getLastCommit(branchesPath, commitsPath)
   }
 
-  def setLastCommit(commitHash: String) = {
-    FilesIO.write(headPath, commitHash)
+  def setLastCommit(newCommitHash: String) = {
+    head.update(newCommitHash, branchesPath).save(headPath)
   }
 
   private def getStaggedStatus(): String = {
@@ -208,6 +215,11 @@ object Repo {
       try {
         FilesIO.createDirectories(dirs);
         FilesIO.createFiles(files);
+        FilesIO.write(s"${sgitDir}branches${File.separator}master", "")
+        Head
+          .fromBranchName("master", s"${sgitDir}branches${File.separator}")
+          .get
+          .save(s"${sgitDir}HEAD")
         return "Repo initialized"
       } catch {
         case e: Exception => e.getMessage();
