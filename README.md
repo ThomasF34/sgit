@@ -12,7 +12,7 @@ Git-like CLI in scala
 - [ ] log
 - [ ] log p
 - [ ] log stat
-- [ ] branch :hammer:
+- [x] branch
 - [ ] branch av :hammer:
 - [x] tag
 - [ ] checkout :hammer:
