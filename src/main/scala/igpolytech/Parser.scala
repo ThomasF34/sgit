@@ -127,6 +127,41 @@ object Parser extends App {
 // OParser.parse returns Option[Config]
   OParser.parse(parser1, args, Config()) match {
     case Some(config) => {
+      val new1 = "Y\nA\nA\nB"
+      val common = "Y\nY\nY\nY\nY\nA\nA\nK\nB"
+      val new2 = "Y\nA\nK\nB"
+      val diff =
+        Merge.fromTripleContent(
+          common,
+          new1,
+          new2
+        )
+
+      // println(Merge.align(diff.toList, new2.split("\n").toList, List()))
+      val result = List(common, new1, new2)
+        .map(elem => Merge.align(diff.toList, elem.split("\n").toList, List()))
+
+      def flat =
+        (t: ((Option[String], Option[String]), Option[String])) =>
+          (t._1._1, t._1._2, t._2)
+
+      result.foreach(println)
+      println(result(0).zip(result(1)).zip(result(2)).map(flat))
+      val toBeMergedListOption =
+        result(0).zip(result(1)).zip(result(2)).map(flat).map {
+          case (ancestor, change1, change2) =>
+            if (ancestor != change1 && ancestor != change2 && change1 != change2)
+              None
+            else if (ancestor == change1 && ancestor == change2) Some(ancestor)
+            else if (ancestor != change1) Some(change1)
+            else Some(change2)
+        }
+
+      if (toBeMergedListOption.contains(None)) System.exit(1)
+      else toBeMergedListOption.flatten.foreach(println)
+      // result(0)
+      //   .zip(result(1))
+      //   .zip(result(2))
 
       config.mode match {
         case "init" => {
