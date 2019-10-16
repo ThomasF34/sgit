@@ -105,6 +105,21 @@ case class Commit(
     if (stats.isEmpty) Array("-- No diff --")
     else stats
   }
+
+  def getParentCommit(commitsPath: String): Option[Commit] = {
+    if (parentHash != "") Commit.getCommitOption(parentHash, commitsPath)
+    else None
+  }
+
+  def hasCommitAsAncestor(commit: Commit, commitsPath: String): Boolean = {
+    getParentCommit(commitsPath) match {
+      case Some(parentCommit) =>
+        if (parentCommit.equals(commit)) {
+          true
+        } else parentCommit.hasCommitAsAncestor(commit, commitsPath)
+      case None => false
+    }
+  }
 }
 
 object Commit {
@@ -130,6 +145,24 @@ object Commit {
     val treeHash = (xmlContent \ "tree").text
     val timestamp = Instant.parse((xmlContent \ "timestamp").text)
     new Commit(treeHash, parentHash, text, author, timestamp)
+  }
 
+  def getAncestorCommit(
+      firstCommit: Commit,
+      secondCommit: Commit,
+      commitsPath: String
+  ): Option[Commit] = {
+    secondCommit.getParentCommit(commitsPath) match {
+      case Some(parentCommit) =>
+        if (firstCommit.hasCommitAsAncestor(parentCommit, commitsPath))
+          Some(parentCommit)
+        else
+          getAncestorCommit(
+            firstCommit,
+            parentCommit,
+            commitsPath
+          )
+      case None => None
+    }
   }
 }

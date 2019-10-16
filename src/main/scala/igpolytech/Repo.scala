@@ -313,6 +313,24 @@ case class Repo(repoDir: String) {
       }
     }
   }
+
+  def merge(branchName: String): String = {
+    if (head.mode != "branch") "You must be on a branch to merge a branch"
+    Branch.getBranchOption(branchName, branchesPath) match {
+      case None => "Sorry, given branch was not founded"
+      case Some(branch) =>
+        (branch.getLastCommit(commitsPath), getLastCommit()) match {
+          case (Some(branchCommit), Some(currentCommit)) =>
+            Merge.fromCommits(branchCommit, currentCommit, commitsPath)
+          case (None, Some(currentCommit)) =>
+            "The branch you're trying to merge has no commit"
+          case (Some(branchCommit), None) =>
+            "The branch you're on has no commit"
+          case (None, None) =>
+            "You cannot merge anything right after initializing your repo"
+        }
+    }
+  }
 }
 
 object Repo {
