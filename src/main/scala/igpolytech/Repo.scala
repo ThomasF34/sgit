@@ -254,24 +254,40 @@ case class Repo(repoDir: String) {
               .isEmpty && Diff.fromTrees(lastCommitTree, stage).isEmpty) {
           //Only then we checkout
           val toCommitOption = Commit.getCommitOption(to, commitsPath)
-          val commitWithHeadMode = toCommitOption match {
-            case Some(commit) => Some((commit, "detached"))
-            case None => {
+          val commitWithHeadMode = toCommitOption
+            .map(commit => (commit, "detached"))
+            .orElse(
               Branch
                 .getBranchOption(to, branchesPath)
-                .flatMap(_.getLastCommit(commitsPath)) match {
-                case Some(branchCommit) => {
-                  Some((branchCommit, to))
-                }
-                case None => {
-                  Tag
-                    .fromName(to, tagsPath)
-                    .flatMap(_.getCommit(commitsPath))
-                    .map(tagCommit => (tagCommit, "detached"))
-                }
-              }
-            }
-          }
+                .flatMap(
+                  _.getLastCommit(commitsPath)
+                    .map(commit => (commit, to))
+                )
+            )
+            .orElse(
+              Tag
+                .fromName(to, tagsPath)
+                .flatMap(_.getCommit(commitsPath))
+                .map(tagCommit => (tagCommit, "detached"))
+            )
+          // val commitWithHeadMode = toCommitOption match {
+          //   case Some(commit) => Some((commit, "detached"))
+          //   case None => {
+          //     Branch
+          //       .getBranchOption(to, branchesPath)
+          //       .flatMap(_.getLastCommit(commitsPath)) match {
+          //       case Some(branchCommit) => {
+          //         Some((branchCommit, to))
+          //       }
+          //       case None => {
+          //         Tag
+          //           .fromName(to, tagsPath)
+          //           .flatMap(_.getCommit(commitsPath))
+          //           .map(tagCommit => (tagCommit, "detached"))
+          //       }
+          //     }
+          //   }
+          // }
           commitWithHeadMode match {
             case Some((commit, headMode)) => {
               checkout(stage, commit, headMode)
