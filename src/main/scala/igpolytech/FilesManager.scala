@@ -10,14 +10,19 @@ import scala.io.Source
 import scala.io.BufferedSource
 
 object FilesIO {
-  def createDirectories(dirs: Array[String]) = {
-    dirs.foreach(dir => new File(dir).mkdirs());
+
+  // UTILS
+  val separator: String = File.separator
+
+  def generateHash(forString: String): String = {
+    MessageDigest
+      .getInstance("SHA-1")
+      .digest(forString.getBytes("UTF-8"))
+      .map("%02x".format(_))
+      .mkString
   }
 
-  def createFiles(paths: Array[String]) = {
-    paths.foreach(path => new File(path).createNewFile())
-  }
-
+  // INPUTS
   /**
     * Returns true if the given dir is existing in the given File object
     * If no current File is given, it searches at the execution root.
@@ -48,18 +53,15 @@ object FilesIO {
     }
   }
 
-  def emptyFile(filePath: String): Boolean = {
-    val file = new File(filePath)
-    val reader: BufferedReader = new BufferedReader(new FileReader(file))
-    reader.readLine() == null
+  def loadXml(path: String): Node = {
+    scala.xml.XML.loadFile(path)
   }
 
-  def getHash(filePath: String): Option[String] = {
-    val file = new File(filePath)
-    val reader: BufferedReader = new BufferedReader(new FileReader(file))
-    val line = reader.readLine()
-    if (line == null) None
-    else Some(line)
+  def getContent(path: String): String = {
+    val file = new File(path)
+    if (file.exists() && file.isFile()) {
+      Source.fromFile(file).mkString
+    } else ""
   }
 
   def getAllFilesPath(pathDir: String): Array[String] = {
@@ -67,7 +69,7 @@ object FilesIO {
     getAllFilesPath(file)
   }
 
-  def getAllFilesPath(dir: File, prefix: String = ""): Array[String] = {
+  private def getAllFilesPath(dir: File, prefix: String = ""): Array[String] = {
     val (files, dirs) = dir
       .listFiles()
       .filter(_.getName() != ".sgit")
@@ -93,6 +95,15 @@ object FilesIO {
         .listFiles()
         .filter(_.getName() != ".sgit")
         .flatMap(getAllFiles(_))
+  }
+  // OUTPUTS
+
+  def createDirectories(dirs: Array[String]) = {
+    dirs.foreach(dir => new File(dir).mkdirs());
+  }
+
+  def createFiles(paths: Array[String]) = {
+    paths.foreach(path => new File(path).createNewFile())
   }
 
   def delete(path: String): Unit = {
@@ -129,22 +140,20 @@ object FilesIO {
     scala.xml.XML.save(path, content);
   }
 
-  def loadXml(path: String): Node = {
-    scala.xml.XML.loadFile(path)
+  // END
+
+  //TODO SEE IF USABLE
+  def emptyFile(filePath: String): Boolean = {
+    val file = new File(filePath)
+    val reader: BufferedReader = new BufferedReader(new FileReader(file))
+    reader.readLine() == null
   }
 
-  def getContent(path: String): String = {
-    val file = new File(path)
-    if (file.exists() && file.isFile()) {
-      Source.fromFile(file).mkString
-    } else ""
-  }
-
-  def generateHash(forString: String): String = {
-    MessageDigest
-      .getInstance("SHA-1")
-      .digest(forString.getBytes("UTF-8"))
-      .map("%02x".format(_))
-      .mkString
+  def getHash(filePath: String): Option[String] = {
+    val file = new File(filePath)
+    val reader: BufferedReader = new BufferedReader(new FileReader(file))
+    val line = reader.readLine()
+    if (line == null) None
+    else Some(line)
   }
 }
