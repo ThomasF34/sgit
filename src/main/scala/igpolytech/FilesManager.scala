@@ -5,7 +5,6 @@ import scala.annotation.tailrec
 import java.io.BufferedReader
 import scala.xml.Node
 import java.io.FileWriter
-import java.security.MessageDigest
 import scala.io.Source
 import scala.io.BufferedSource
 
@@ -14,15 +13,8 @@ object FilesIO {
   // UTILS
   val separator: String = File.separator
 
-  def generateHash(forString: String): String = {
-    MessageDigest
-      .getInstance("SHA-1")
-      .digest(forString.getBytes("UTF-8"))
-      .map("%02x".format(_))
-      .mkString
-  }
-
   // INPUTS
+
   /**
     * Returns true if the given dir is existing in the given File object
     * If no current File is given, it searches at the execution root.

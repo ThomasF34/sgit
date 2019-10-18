@@ -9,7 +9,7 @@ case class Tree(
 ) {
 
   def hash: String =
-    FilesIO.generateHash(this.toString())
+    GeneralHelper.generateHash(this.toString())
 
   /**
     * Returns an array of the tree content
@@ -24,7 +24,10 @@ case class Tree(
     */
   def save(treesPath: String, blobsPath: String): Unit = {
     trees.foreach(_.save(treesPath, blobsPath))
-    blobs.foreach(_.save(blobsPath))
+    //TODO delete me
+    val writeBlobToRepo = (content: String, hash: String) =>
+      FilesIO.write(s"${blobsPath}${hash}", content)
+    blobs.foreach(_.save(writeBlobToRepo))
     FilesIO.saveXml(this.toXml(), s"${treesPath}${hash}")
   }
 
@@ -65,12 +68,22 @@ case class Tree(
   }
 
   def getModified(projectDir: String, blobsPath: String): Array[Diff] = {
+    //TODO delete me
+    val blobExists = (blobName: String) =>
+      FilesIO.fileExists(s"${projectDir}${name}${blobName}")
+    val blobContent = (blobHash: String) =>
+      FilesIO.getContent(s"${blobsPath}${blobHash}")
+    val fileContent = (blobName: String) =>
+      FilesIO.getContent(s"${projectDir}${this.name}${blobName}")
     blobs
       .flatMap(
         _.getDiffWithNew(
           projectDir,
           name,
-          blobsPath
+          blobsPath,
+          blobExists,
+          blobContent,
+          fileContent
         )
       ) ++ trees.flatMap(_.getModified(projectDir, blobsPath))
   }
@@ -82,7 +95,10 @@ case class Tree(
 
   def createAllFiles(projectDir: String): Unit = {
     trees.map(_.createAllFiles(projectDir))
-    blobs.map(_.writeBlob(s"${projectDir}$name"))
+    //TODO
+    val writeBlobToRepo = (nameBlob: String, content: String) =>
+      FilesIO.write(s"${projectDir}${this.name}$nameBlob", content)
+    blobs.map(_.writeBlob(writeBlobToRepo))
   }
 }
 
@@ -104,10 +120,13 @@ object Tree {
           Tree.getTree(pathTreeDir, pathBlobDir, hash.text.trim())
         })
         .toArray
+    // TODO delete me
+    val blobContent = (blobHash: String) =>
+      FilesIO.getContent(s"${pathBlobDir}$blobHash")
     val blobs =
       (xmlContent \ "blobs" \ "blob")
         .map(
-          hash => Blob.getBlob(hash \@ "name", pathBlobDir, hash.text.trim())
+          hash => Blob.getBlob(hash \@ "name", hash.text.trim(), blobContent)
         )
         .toArray
     new Tree(name, trees, blobs)
@@ -139,12 +158,15 @@ object Tree {
   ): Tree = {
     val (blobs, trees) = files.partition(pathAsArray => pathAsArray.length == 1)
 
+    //TODO delete me
+    val blobContent = (blobHash: String) =>
+      FilesIO.getContent(s"${projectDir}${currentName}$blobHash")
     val newBlobsArray = blobs
       .map(blob => {
         Blob.getBlob(
           blob(0),
-          s"${projectDir}${currentName}",
-          blob(0)
+          blob(0),
+          blobContent
         )
       })
       .toArray

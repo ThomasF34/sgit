@@ -18,7 +18,7 @@ case class Commit(
   }
 
   def hash: String = {
-    FilesIO.generateHash(
+    GeneralHelper.generateHash(
       s"${treeHash}${parentHash}${text}${author}${timestamp}"
     )
   }
