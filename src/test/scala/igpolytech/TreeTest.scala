@@ -59,7 +59,8 @@ class TreeTest extends FunSpec with Matchers {
           Array("testDir"),
           fakeProjectDir,
           allFiles,
-          fileContent
+          fileContent,
+          ioManager.fileExists
         )
 
       assert(

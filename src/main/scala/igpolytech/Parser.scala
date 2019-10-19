@@ -71,7 +71,7 @@ object Parser extends App {
           opt[Unit]('p', "patch")
             .text("show the patch (diff) of each commited file ")
             .action((_, c) => c.copy(patch = true)),
-          opt[Unit]("stats")
+          opt[Unit]("stat")
             .text(
               "show the stats of insertion and deletion of each commited file"
             )
