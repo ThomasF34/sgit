@@ -158,7 +158,7 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
     "Changes added"
   }
 
-  def commit(message: String) = {
+  def commit(message: String, author: String = "No author") = {
 
     def checkMessageAndCommitTree(
         stage: Tree,
@@ -168,7 +168,7 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
       if (message != "")
         commitWithMessage(
           message,
-          "NO AUTOR FOR NOW TODO",
+          author,
           stage,
           lastCommitHash
         )
@@ -180,7 +180,7 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
           ioManager.delete(commitTextPath)
           commitWithMessage(
             commitMessage,
-            "NO AUTOR FOR NOW TODO",
+            author,
             stage,
             lastCommitHash
           )

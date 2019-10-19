@@ -9,6 +9,7 @@ case class Config(
     stats: Boolean = false,
     givenName: String = "",
     text: String = "",
+    author: String = System.getProperty("user.name"),
     displayAll: Boolean = false,
     verbose: Boolean = false
 )
@@ -54,7 +55,11 @@ object Parser extends App {
           opt[String]('m', "message")
             .optional()
             .text("Message of the commit")
-            .action((message, c) => c.copy(text = message))
+            .action((message, c) => c.copy(text = message)),
+          opt[String]('a', "author")
+            .optional()
+            .text("Author of the commit")
+            .action((author, c) => c.copy(author = author))
         ),
       cmd("diff")
         .action((_, c) => c.copy(mode = "diff"))
@@ -161,8 +166,9 @@ object Parser extends App {
             }
             case Some(repo) => {
               config.mode match {
-                case "add"    => println(repo.add(config.files))
-                case "commit" => println(repo.commit(config.text))
+                case "add" => println(repo.add(config.files))
+                case "commit" =>
+                  println(repo.commit(config.text, config.author))
                 case "branch" =>
                   if (config.displayAll || config.verbose)
                     println(repo.listBranch(config.displayAll, config.verbose))
