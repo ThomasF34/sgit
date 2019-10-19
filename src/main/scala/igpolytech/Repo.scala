@@ -22,14 +22,20 @@ case class Repo(repoDir: String) {
     case s"${value}.sgit" => value
   }
 
-  val branchContent = (name: String) =>
-    FilesIO.getContent(s"${branchesPath}$name")
-  val blobContent = (blobHash: String) =>
-    FilesIO.getContent(s"${blobsPath}$blobHash")
-  val tagContent = (name: String) => FilesIO.getContent(s"${tagsPath}$name")
-  val fileContent = (dirName: String) =>
-    (fileName: String) =>
-      FilesIO.getContent(s"${projectDir}${dirName}$fileName")
+  lazy val branchContent = FilesIO.getContent(branchesPath)(_)
+  lazy val blobContent = FilesIO.getContent(blobsPath)(_)
+  lazy val tagContent = FilesIO.getContent(tagsPath)(_)
+  lazy val fileContent = (dirName: String) =>
+    (fileName: String) => FilesIO.getContent(s"${projectDir}$dirName")(fileName)
+
+  // val branchContent = (name: String) =>
+  //   FilesIO.getContent(s"${branchesPath}$name")
+  // val blobContent = (blobHash: String) =>
+  //   FilesIO.getContent(s"${blobsPath}$blobHash")
+  // val tagContent = (name: String) => FilesIO.getContent(s"${tagsPath}$name")
+  // val fileContent = (dirName: String) =>
+  //   (fileName: String) =>
+  //     FilesIO.getContent(s"${projectDir}${dirName}$fileName")
 
   lazy val commitContent = FilesIO.loadXml(commitsPath)(_)
   lazy val treeContent = FilesIO.loadXml(treesPath)(_)
@@ -40,11 +46,11 @@ case class Repo(repoDir: String) {
   //   FilesIO.loadXml(s"${treesPath}$treeHash")
   // val headContent = () => FilesIO.loadXml(s"${headDir}$headFile")
 
-  def tagExists = FilesIO.fileExists(tagsPath)(_: String)
-  def commitExists = FilesIO.fileExists(commitsPath)(_: String)
-  def branchExists = FilesIO.fileExists(branchesPath)(_: String)
+  def tagExists = FilesIO.fileExists(tagsPath)(_)
+  def commitExists = FilesIO.fileExists(commitsPath)(_)
+  def branchExists = FilesIO.fileExists(branchesPath)(_)
   def blobExists(treeName: String)(blobName: String) =
-    FilesIO.fileExists(projectDir)(treeName, blobName)
+    FilesIO.fileExists(projectDir)(s"${treeName}$blobName")
   // val blobExists = (treeName: String) =>
   //   (blobName: String) =>
   //     FilesIO.fileExists(s"${projectDir}${treeName}${blobName}")
@@ -192,10 +198,10 @@ case class Repo(repoDir: String) {
         lastCommitHash: String
     ): String = {
       //Before commiting a tree we need to ask for a commit text
-      //TODO DELETE ME
-      val commitTextPath = s"${repoDir}${File.separator}CommitMessage"
+      val commitTextPath = s"${commitMessageDir}$commitMessageFile"
       if (FilesIO.fileExists(commitMessageDir)(commitMessageFile)) {
-        val commitMessage = FilesIO.getContent(commitTextPath)
+        val commitMessage =
+          FilesIO.getContent(commitMessageDir)(commitMessageFile)
         FilesIO.delete(commitTextPath)
         commitWithMessage(
           commitMessage,

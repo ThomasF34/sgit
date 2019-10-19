@@ -22,8 +22,8 @@ object FilesIO {
     new File(s"${current.getAbsolutePath()}${File.separatorChar}$dir")
       .isDirectory()
 
-  def fileExists(dir: String)(path: String*): Boolean =
-    new File(s"${dir}${path.mkString}")
+  def fileExists(dir: String)(path: String): Boolean =
+    new File(s"${dir}$path")
       .isFile()
 
   /**
@@ -48,8 +48,8 @@ object FilesIO {
     scala.xml.XML.loadFile(s"${dir}$file")
   }
 
-  def getContent(path: String): String = {
-    val file = new File(path)
+  def getContent(dir: String)(filename: String): String = {
+    val file = new File(s"${dir}$filename")
     if (file.exists() && file.isFile()) {
       Source.fromFile(file).mkString
     } else ""

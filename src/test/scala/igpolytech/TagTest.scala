@@ -41,7 +41,7 @@ class TagTest extends FunSpec with Matchers {
       val res = repo.createTag("superTag")
 
       res shouldBe "Tag superTag created"
-      FilesIO.getContent(s"${repo.tagsPath}superTag") shouldBe "test"
+      FilesIO.getContent(repo.tagsPath)("superTag") shouldBe "test"
     }
 
     it("should list the existing tags") {
