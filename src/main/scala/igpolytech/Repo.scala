@@ -246,8 +246,54 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
     ioManager.getAllFilesPath(projectDir)
 
   def listBranch(all: Boolean, verbose: Boolean): String = {
-    ioManager.getAllFilesPath(branchesPath).mkString
+    val branches = ioManager.getAllFilesPath(branchesPath)
+    val tags = ioManager.getAllFilesPath(tagsPath)
+    (all, verbose) match {
+      case (true, true) =>
+        s"Here are the existing branch(es) :\n${getBranchDetails(branches)}\nHere are the existing tag(s) :\n${getTagsDetails(tags)}"
+      case (false, true) =>
+        s"Here are the existing branch(es) :\n${getBranchDetails(branches)}"
+      case (true, false) =>
+        s"Here are the existing branch(es) :\n${if (branches.isEmpty) "-- No branch --"
+        else branches.mkString("- ", "\n- ", "")}\nHere are the existing tag(s) :\n${if (tags.isEmpty) "-- No tag --"
+        else
+          tags
+            .mkString("- ", "\n- ", "")}"
+      case (false, false) =>
+        s"Here are the existing branch(es) :\n${if (branches.isEmpty) "-- No branch --"
+        else branches.mkString("- ", "\n- ", "")}"
+    }
   }
+
+  private def getBranchDetails(branchesName: Array[String]): String =
+    if (branchesName.isEmpty) "-- No branch --"
+    else
+      branchesName
+        .map(
+          name => {
+            Branch
+              .fromBranchName(name, branchContent)
+              .getLastCommit(commitContent)
+              .map(commit => s"- $name => ${commit.hash} = ${commit.title}")
+              .getOrElse(s"- $name")
+          }
+        )
+        .mkString("\n")
+
+  private def getTagsDetails(tagName: Array[String]): String =
+    if (tagName.isEmpty) "-- No tag --"
+    else
+      tagName
+        .map(
+          name => {
+            Tag
+              .fromName(name, tagExists, tagContent)
+              .flatMap(_.getCommit(commitContent, commitExists))
+              .map(commit => s"- $name => ${commit.hash} = ${commit.title}")
+              .getOrElse(s"- $name")
+          }
+        )
+        .mkString("\n")
 
   def createBranch(branchName: String): String = {
     if (branchExists(branchName))

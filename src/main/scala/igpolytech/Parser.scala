@@ -99,10 +99,6 @@ object Parser extends App {
                 failure(
                   "'verbose' option does not make sense with a branch name"
                 )
-              else if (c.mode == "branch" && !c.displayAll && !c.verbose && c.givenName == "")
-                failure(
-                  "You must either put a name or an option. See sgit --help for help"
-                )
               else success
           )
         ),
@@ -170,9 +166,10 @@ object Parser extends App {
                 case "commit" =>
                   println(repo.commit(config.text, config.author))
                 case "branch" =>
-                  if (config.displayAll || config.verbose)
+                  if (config.givenName != "")
+                    println(repo.createBranch(config.givenName))
+                  else
                     println(repo.listBranch(config.displayAll, config.verbose))
-                  else println(repo.createBranch(config.givenName))
                 case "log"  => println(repo.log(config.stats, config.patch))
                 case "diff" => println(repo.diff())
                 case "tag" =>
