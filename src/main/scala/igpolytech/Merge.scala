@@ -1,17 +1,19 @@
 package igpolytech
 import scala.annotation.tailrec
+import scala.xml.Node
 
 object Merge {
   def fromCommits(
       firstCommit: Commit,
       secondCommit: Commit,
-      commitsPath: String
+      commitContent: (String) => Node,
+      commitExists: (String) => Boolean
   ) = {
     //TODO DELETE ME
-    val commitContent = (hash: String) =>
-      FilesIO.loadXml(s"${commitsPath}${hash}")
-    val commitExists = (hash: String) =>
-      FilesIO.fileExists(s"${commitsPath}$hash")
+    // val commitContent = (hash: String) =>
+    //   FilesIO.loadXml(s"${commitsPath}${hash}")
+    // val commitExists = (hash: String) =>
+    //   FilesIO.fileExists(s"${commitsPath}$hash")
 
     val ancestorCommit =
       Commit.getAncestorCommit(

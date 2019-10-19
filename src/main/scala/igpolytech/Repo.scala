@@ -473,13 +473,24 @@ case class Repo(repoDir: String) {
   }
 
   def merge(branchName: String): String = {
+    //TODO DELETE ME
+    val commitContent = (hash: String) =>
+      FilesIO.loadXml(s"${commitsPath}${hash}")
+    val commitExists = (hash: String) =>
+      FilesIO.fileExists(s"${commitsPath}$hash")
+
     if (head.mode != "branch") "You must be on a branch to merge a branch"
     Branch.getBranchOption(branchName, branchesPath) match {
       case None => "Sorry, given branch was not founded"
       case Some(branch) =>
         (branch.getLastCommit(commitsPath), getLastCommit()) match {
           case (Some(branchCommit), Some(currentCommit)) =>
-            Merge.fromCommits(branchCommit, currentCommit, commitsPath)
+            Merge.fromCommits(
+              branchCommit,
+              currentCommit,
+              commitContent,
+              commitExists
+            )
           case (None, Some(currentCommit)) =>
             "The branch you're trying to merge has no commit"
           case (Some(branchCommit), None) =>
