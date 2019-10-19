@@ -4,10 +4,12 @@ import org.scalatest.Matchers
 import java.io.File
 
 class TagTest extends FunSpec with Matchers {
+  implicit val ioManager = IOManager()
+
   override def withFixture(test: NoArgTest) = {
     try test()
     finally {
-      if (new File(".sgit").exists()) FilesIO.delete(".sgit")
+      if (new File(".sgit").exists()) ioManager.delete(".sgit")
     }
   }
 
@@ -15,7 +17,7 @@ class TagTest extends FunSpec with Matchers {
     it("should not create tag if already exists") {
       Repo.init(".")
       val repo = Repo(".sgit")
-      FilesIO.write(repo.tagsPath)("superTag", "abc")
+      ioManager.write(repo.tagsPath)("superTag", "abc")
 
       val res = repo.createTag("superTag")
 
@@ -41,14 +43,14 @@ class TagTest extends FunSpec with Matchers {
       val res = repo.createTag("superTag")
 
       res shouldBe "Tag superTag created"
-      FilesIO.getContent(repo.tagsPath)("superTag") shouldBe "test"
+      ioManager.getContent(repo.tagsPath)("superTag") shouldBe "test"
     }
 
     it("should list the existing tags") {
       Repo.init(".")
       val repo = Repo(".sgit")
 
-      FilesIO.write(repo.tagsPath)("superTag", "A113")
+      ioManager.write(repo.tagsPath)("superTag", "A113")
 
       val res = repo.listTags()
 

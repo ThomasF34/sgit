@@ -4,10 +4,11 @@ import org.scalatest.Matchers
 import java.io.File
 
 class CommitTest extends FunSpec with Matchers {
+  implicit val ioManager = IOManager()
   override def withFixture(test: NoArgTest) = {
     try test()
     finally {
-      if (new File(".sgit").exists()) FilesIO.delete(".sgit")
+      if (new File(".sgit").exists()) ioManager.delete(".sgit")
     }
   }
 
@@ -45,7 +46,7 @@ class CommitTest extends FunSpec with Matchers {
       val blob = new Blob("A113", getFakeContent)
       val tree = new Tree("", Array(), Array(blob))
       repo.setStage(tree)
-      FilesIO.write(".sgit/")("CommitMessage", "John Lasseter is great")
+      ioManager.write(".sgit/")("CommitMessage", "John Lasseter is great")
 
       val res = repo.commit()
 

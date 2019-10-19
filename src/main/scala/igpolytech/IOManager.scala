@@ -7,7 +7,7 @@ import scala.xml.Node
 import java.io.FileWriter
 import scala.io.Source
 
-object FilesIO {
+case class IOManager() {
 
   // UTILS
   val separator: String = File.separator
@@ -45,7 +45,7 @@ object FilesIO {
     * Returns the path of the repo dir or $none if not found
     */
   @tailrec
-  def getRepoDirPath(
+  final def getRepoDirPath(
       repoDir: String,
       current: File = new File(".")
   ): Option[String] = {
