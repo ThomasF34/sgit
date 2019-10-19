@@ -53,7 +53,7 @@ case class Repo(repoDir: String) {
     val saveBranchToRepo = (name: String, content: String) =>
       FilesIO.write(s"${branchesPath}$name", content)
     head
-      .update(newCommitHash, branchesPath, branchContent, saveBranchToRepo)
+      .update(newCommitHash, branchContent, saveBranchToRepo)
       .save(saveHeadToRepo)
   }
 
@@ -303,7 +303,6 @@ case class Repo(repoDir: String) {
     val blobExists = (treeName: String) =>
       (blobName: String) =>
         FilesIO.fileExists(s"${projectDir}${treeName}${blobName}")
-    def vlov(treename: String)(blobName: String) = FilesIO.fileExists(treesPath)
     val fileContent = (treeName: String) =>
       (blobName: String) =>
         FilesIO.getContent(s"${projectDir}${treeName}${blobName}")

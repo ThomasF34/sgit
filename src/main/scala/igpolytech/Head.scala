@@ -19,7 +19,6 @@ case class Head(mode: String, content: String) {
     */
   def update(
       newContent: String,
-      branchesPath: String,
       branchContent: (String) => String,
       saveBranchToRepo: (String, String) => Unit
   ): Head = {
