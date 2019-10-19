@@ -1,18 +1,57 @@
 package igpolytech
 import java.io.File
+import scala.xml.Node
 
-case class Repo(repoDir: String) {
+case class Repo(repoDir: String)(implicit ioManager: IOManager) {
   val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
   val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
   val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
   val branchesPath = s"${repoDir}${File.separator}branches${File.separator}"
   val tagsPath = s"${repoDir}${File.separator}tags${File.separator}"
-  val headPath = s"${repoDir}${File.separator}HEAD"
 
-  def head: Head = Head.fromHeadFile(headPath, commitsPath)
+  val headDir = s"${repoDir}${File.separator}"
+  val headFile = "HEAD"
+
+  val stageDir = s"${repoDir}${File.separator}"
+  val stageFile = "STAGE"
+
+  val commitMessageDir = s"${repoDir}${File.separator}"
+  val commitMessageFile = "CommitMessage"
+
   val projectDir = repoDir match {
     case s"${value}.sgit" => value
   }
+
+  lazy val branchContent = ioManager.getContent(branchesPath)(_)
+  lazy val blobContent = ioManager.getContent(blobsPath)(_)
+  lazy val tagContent = ioManager.getContent(tagsPath)(_)
+  lazy val fileContent = (dirName: String) =>
+    (fileName: String) =>
+      ioManager.getContent(s"${projectDir}$dirName")(fileName)
+
+  lazy val commitContent = ioManager.loadXml(commitsPath)(_)
+  lazy val treeContent = ioManager.loadXml(treesPath)(_)
+  lazy val headContent = ioManager.loadXml(headDir)(headFile)
+
+  def tagExists = ioManager.fileExists(tagsPath)(_)
+  def commitExists = ioManager.fileExists(commitsPath)(_)
+  def branchExists = ioManager.fileExists(branchesPath)(_)
+  def blobExists(treeName: String)(blobName: String) =
+    ioManager.fileExists(projectDir)(s"${treeName}$blobName")
+
+  def saveCommitToRepo = ioManager.saveXml(commitsPath)(_, _)
+  def saveTreeToRepo = ioManager.saveXml(treesPath)(_, _)
+  def saveHeadToRepo = ioManager.saveXml(headDir)(_, headFile)
+
+  def saveBranchToRepo = ioManager.write(branchesPath)(_, _)
+  def saveTagToRepo = ioManager.write(tagsPath)(_, _)
+  def saveBlobToRepo = ioManager.write(blobsPath)(_, _)
+  def writeBlobFromFile(
+      tree: String
+  )(blob: String, content: String) =
+    ioManager.write(s"${projectDir}${tree}")(blob, content)
+
+  def head: Head = Head.fromHeadFile(headContent)
 
   def getStatus(): String = {
     s"${getHeadStatus()}\n# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
@@ -23,36 +62,43 @@ case class Repo(repoDir: String) {
       case "branch" => s"You're on branch ${head.content}"
       case "detached" =>
         s"${Console.RED}${Console.BOLD}!! CAREFUL !! You're on detached mode !${Console.RESET}\nThe commit title you're on is '${Console.BOLD}${Commit
-          .getCommit(head.content, commitsPath)
+          .getCommit(head.content, commitContent)
           .title}${Console.RESET}'"
     }
   }
 
-  def getLastCommit(): Option[Commit] = {
-    head.getLastCommit(branchesPath, commitsPath)
-  }
+  def getLastCommit(): Option[Commit] =
+    head.getLastCommit(commitContent, branchContent)
 
   def setLastCommit(newCommitHash: String) = {
-    head.update(newCommitHash, branchesPath).save(headPath)
+    head
+      .update(newCommitHash, branchContent, saveBranchToRepo)
+      .save(saveHeadToRepo)
   }
 
-  def setHead(headMode: String, commitHash: String) =
-    Head(headMode, commitHash).save(headPath)
+  def setHead(headMode: String, commitHash: String) = {
+    Head(headMode, commitHash).save(saveHeadToRepo)
+  }
 
   private def getStaggedStatus(): String = {
-    val hash = FilesIO.getHash(s"${repoDir}${File.separator}STAGE")
+    val hash = ioManager.getHash(s"${repoDir}${File.separator}STAGE")
     hash match {
       case None => "-- Nothing in stage --"
       case Some(treeHash) => {
         val stageTree: Tree =
           Tree.getTree(
-            treesPath,
-            blobsPath,
-            treeHash
+            treeHash,
+            blobContent,
+            treeContent
           )
         getLastCommit() match {
           case Some(commit) => {
-            val commitTree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
+            val commitTree =
+              Tree.getTree(
+                commit.treeHash,
+                blobContent,
+                treeContent
+              )
             val diff = Diff.fromTrees(commitTree, stageTree)
             if (diff.isEmpty) "-- Nothing in stage --"
             else diff.mkString("\n")
@@ -68,7 +114,12 @@ case class Repo(repoDir: String) {
   private def getModifiedStatus(): String = {
     getStage() match {
       case Some(stage) => {
-        val diff = stage.getModified(projectDir, blobsPath)
+        val diff =
+          stage.getModified(
+            blobExists,
+            blobContent,
+            fileContent
+          )
         if (diff.isEmpty) "-- Nothing modified --"
         else diff.mkString
       }
@@ -88,14 +139,18 @@ case class Repo(repoDir: String) {
   }
 
   def add(files: Array[String]): String = {
+    val allFiles = (f: File) => ioManager.getAllFiles(f)
+
     val volatileTree: Tree = Tree.createFromList(
       files.filterNot(_.contains(".sgit")),
-      projectDir
+      projectDir,
+      allFiles,
+      fileContent
     )
 
     // If no stage -> volatile tree = stage (means no commit had been done)
     // If stage -> merge volatile tree with stage tree
-    //WARNING WHEN COMMIT DO NOT RESET STAGE. WE WONT BE ABLE TO COMPARE WITH STAGE IF RESETED
+    // WARNING : WHEN COMMIT IS DONE WE DO NOT RESET STAGE.
     getStage() match {
       case Some(stage) => setStage(stage.mergeTree(volatileTree))
       case None        => setStage(volatileTree)
@@ -103,26 +158,36 @@ case class Repo(repoDir: String) {
     "Changes added"
   }
 
-  def commit() = {
+  def commit(message: String, author: String = "No author") = {
 
     def checkMessageAndCommitTree(
         stage: Tree,
         lastCommitHash: String
     ): String = {
       //Before commiting a tree we need to ask for a commit text
-      val commitTextPath = s"${repoDir}${File.separator}CommitMessage"
-      if (FilesIO.fileExists(commitTextPath)) {
-        val commitMessage = FilesIO.getContent(commitTextPath)
-        FilesIO.delete(commitTextPath)
+      if (message != "")
         commitWithMessage(
-          commitMessage,
-          "NO AUTOR FOR NOW TODO",
+          message,
+          author,
           stage,
           lastCommitHash
         )
-      } else {
-        FilesIO.createFiles(Array(commitTextPath))
-        s"Please edit the commit message file with the commit message and use the commit command again \n Commit Message file is located at ${commitTextPath}"
+      else {
+        val commitTextPath = s"${commitMessageDir}$commitMessageFile"
+        if (ioManager.fileExists(commitMessageDir)(commitMessageFile)) {
+          val commitMessage =
+            ioManager.getContent(commitMessageDir)(commitMessageFile)
+          ioManager.delete(commitTextPath)
+          commitWithMessage(
+            commitMessage,
+            author,
+            stage,
+            lastCommitHash
+          )
+        } else {
+          ioManager.createFiles(Array(commitTextPath))
+          s"Please edit the commit message file with the commit message and use the commit command again \n Commit Message file is located at ${commitTextPath}"
+        }
       }
     }
 
@@ -133,7 +198,7 @@ case class Repo(repoDir: String) {
         lastCommitHash: String
     ): String = {
       val commit = Commit(stage.hash, lastCommitHash, text, author)
-      commit.save(commitsPath)
+      commit.save(saveCommitToRepo)
       setLastCommit(commit.hash)
       s"Change commited : ${commit.title}"
     }
@@ -141,8 +206,13 @@ case class Repo(repoDir: String) {
     //Check if there is something to commit then check message and commit
     (getStage(), getLastCommit()) match {
       case (Some(stage), Some(commit)) => {
-        val tree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
-        if (Diff.fromTrees(stage, tree).isEmpty)
+        val tree =
+          Tree.getTree(
+            commit.treeHash,
+            blobContent,
+            treeContent
+          )
+        if (Diff.fromTrees(tree, stage).isEmpty)
           "Sorry, nothing is to be commited. Use sgit add before commiting"
         else checkMessageAndCommitTree(stage, commit.hash)
       }
@@ -153,37 +223,83 @@ case class Repo(repoDir: String) {
   }
 
   def getStage(): Option[Tree] = {
-    val stageHashOption = FilesIO.getHash(s"${repoDir}${File.separator}STAGE")
+    val stageHashOption = ioManager.getHash(s"${repoDir}${File.separator}STAGE")
     stageHashOption.map(
       stageHash =>
         Tree.getTree(
-          treesPath,
-          blobsPath,
-          stageHash
+          stageHash,
+          blobContent,
+          treeContent
         )
     )
   };
 
   def setStage(newStage: Tree) = {
     newStage.save(
-      treesPath,
-      blobsPath
+      saveTreeToRepo,
+      saveBlobToRepo
     )
-    FilesIO.write(s"${repoDir}${File.separator}STAGE", newStage.hash)
+    ioManager.write(stageDir)(stageFile, newStage.hash)
   }
 
   def allFiles: Array[String] =
-    FilesIO.getAllFilesPath(projectDir)
+    ioManager.getAllFilesPath(projectDir)
 
   def listBranch(all: Boolean, verbose: Boolean): String = {
-    FilesIO.getAllFilesPath(branchesPath).mkString
+    val branches = ioManager.getAllFilesPath(branchesPath)
+    val tags = ioManager.getAllFilesPath(tagsPath)
+    (all, verbose) match {
+      case (true, true) =>
+        s"Here are the existing branch(es) :\n${getBranchDetails(branches)}\nHere are the existing tag(s) :\n${getTagsDetails(tags)}"
+      case (false, true) =>
+        s"Here are the existing branch(es) :\n${getBranchDetails(branches)}"
+      case (true, false) =>
+        s"Here are the existing branch(es) :\n${if (branches.isEmpty) "-- No branch --"
+        else branches.mkString("- ", "\n- ", "")}\nHere are the existing tag(s) :\n${if (tags.isEmpty) "-- No tag --"
+        else
+          tags
+            .mkString("- ", "\n- ", "")}"
+      case (false, false) =>
+        s"Here are the existing branch(es) :\n${if (branches.isEmpty) "-- No branch --"
+        else branches.mkString("- ", "\n- ", "")}"
+    }
   }
 
+  private def getBranchDetails(branchesName: Array[String]): String =
+    if (branchesName.isEmpty) "-- No branch --"
+    else
+      branchesName
+        .map(
+          name => {
+            Branch
+              .fromBranchName(name, branchContent)
+              .getLastCommit(commitContent)
+              .map(commit => s"- $name => ${commit.hash} = ${commit.title}")
+              .getOrElse(s"- $name")
+          }
+        )
+        .mkString("\n")
+
+  private def getTagsDetails(tagName: Array[String]): String =
+    if (tagName.isEmpty) "-- No tag --"
+    else
+      tagName
+        .map(
+          name => {
+            Tag
+              .fromName(name, tagExists, tagContent)
+              .flatMap(_.getCommit(commitContent, commitExists))
+              .map(commit => s"- $name => ${commit.hash} = ${commit.title}")
+              .getOrElse(s"- $name")
+          }
+        )
+        .mkString("\n")
+
   def createBranch(branchName: String): String = {
-    if (FilesIO.fileExists(s"${branchesPath}$branchName"))
+    if (branchExists(branchName))
       "Sorry branch name is already used"
     else {
-      FilesIO.write(s"${branchesPath}$branchName", getLastCommit() match {
+      saveBranchToRepo(branchName, getLastCommit() match {
         case None         => ""
         case Some(commit) => commit.hash
       })
@@ -192,17 +308,24 @@ case class Repo(repoDir: String) {
   }
 
   def listTags(): String = {
-    val tags = Tag.allTags(tagsPath)
+    val tags =
+      Tag.allTags(ioManager.getAllFilesPath(tagsPath), tagContent)
     if (!tags.isEmpty) s"Tags:\n - ${tags.mkString("\n - ")}"
     else "No tags created. See sgit tag <name> to create one"
   }
 
   def createTag(tagName: String): String = {
-    if (Tag.exists(tagName, tagsPath))
+    if (Tag.exists(tagName, tagExists))
       "Sorry tag name is already used"
     else {
-      Tag(tagName, FilesIO.getContent(headPath)).save(tagsPath)
-      s"Tag $tagName created"
+      head.getLastCommit(commitContent, branchContent) match {
+        case None =>
+          s"The head your repository does not point towards a commit. Please commit before creating a tag"
+        case Some(commit) => {
+          Tag(tagName, commit.hash).save(saveTagToRepo)
+          s"Tag $tagName created"
+        }
+      }
     }
   }
 
@@ -211,7 +334,11 @@ case class Repo(repoDir: String) {
       case None => "No diff"
       case Some(stage) =>
         val modified = stage
-          .getModified(projectDir, blobsPath)
+          .getModified(
+            blobExists,
+            blobContent,
+            fileContent
+          )
 
         if (modified.isEmpty) "No diff"
         else modified.map(_.getDetails).mkString("\n")
@@ -224,19 +351,26 @@ case class Repo(repoDir: String) {
         detailList :+ commit.getDetails(
           withStats,
           withDiff,
-          treesPath,
-          blobsPath,
-          commitsPath
+          blobContent,
+          treeContent,
+          commitContent
         )
       else
         loop(
-          Commit.getCommit(commit.parentHash, commitsPath),
+          Commit.getCommit(commit.parentHash, commitContent),
           detailList :+ commit
-            .getDetails(withStats, withDiff, treesPath, blobsPath, commitsPath)
+            .getDetails(
+              withStats,
+              withDiff,
+              blobContent,
+              treeContent,
+              commitContent
+            )
         )
     }
 
-    val headCommit = head.getLastCommit(branchesPath, commitsPath)
+    val headCommit =
+      head.getLastCommit(commitContent, branchContent)
     headCommit match {
       case Some(commit) => loop(commit, Array()).mkString("\n")
       case None         => "No commit"
@@ -248,30 +382,38 @@ case class Repo(repoDir: String) {
     getStage() match {
       case Some(stage) => {
         val lastCommitTree =
-          Tree.getTree(treesPath, blobsPath, getLastCommit().get.treeHash)
+          Tree.getTree(
+            getLastCommit().get.treeHash,
+            blobContent,
+            treeContent
+          )
         if (stage
-              .getModified(projectDir, blobsPath)
+              .getModified(
+                blobExists,
+                blobContent,
+                fileContent
+              )
               .isEmpty && Diff.fromTrees(lastCommitTree, stage).isEmpty) {
           //Only then we checkout
-          val toCommitOption = Commit.getCommitOption(to, commitsPath)
-          val commitWithHeadMode = toCommitOption match {
-            case Some(commit) => Some((commit, "detached"))
-            case None => {
+          val toCommitOption =
+            Commit.getCommitOption(to, commitContent, commitExists)
+          val commitWithHeadMode = toCommitOption
+            .map(commit => (commit, "detached"))
+            .orElse(
               Branch
-                .getBranchOption(to, branchesPath)
-                .flatMap(_.getLastCommit(commitsPath)) match {
-                case Some(branchCommit) => {
-                  Some((branchCommit, to))
-                }
-                case None => {
-                  Tag
-                    .fromName(to, tagsPath)
-                    .flatMap(_.getCommit(commitsPath))
-                    .map(tagCommit => (tagCommit, "detached"))
-                }
-              }
-            }
-          }
+                .getBranchOption(to, branchExists, branchContent)
+                .flatMap(
+                  _.getLastCommit(commitContent)
+                    .map(commit => (commit, to))
+                )
+            )
+            .orElse(
+              Tag
+                .fromName(to, tagExists, tagContent)
+                .flatMap(_.getCommit(commitContent, commitExists))
+                .map(tagCommit => (tagCommit, "detached"))
+            )
+
           commitWithHeadMode match {
             case Some((commit, headMode)) => {
               checkout(stage, commit, headMode)
@@ -289,7 +431,12 @@ case class Repo(repoDir: String) {
 
   def checkout(actualStage: Tree, commit: Commit, head: String): String = {
     //Need to check if all actual untracked file are contained in destination commit. If so fatal message
-    val destinationTree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
+    val destinationTree =
+      Tree.getTree(
+        commit.treeHash,
+        blobContent,
+        treeContent
+      )
     val destinationFiles =
       destinationTree.getAllFiles()
     val untracked = getUntracked()
@@ -298,8 +445,8 @@ case class Repo(repoDir: String) {
       s"fatal: The following untracked working tree files would be overwritten by checkout: \n${diff
         .mkString("\n")}\nPlease move or remove them before you switch branches. ${Console.RED}${Console.BOLD}Aborting${Console.RESET}"
     else {
-      FilesIO.deleteFiles(actualStage.getAllFiles())
-      destinationTree.createAllFiles(projectDir)
+      ioManager.deleteFiles(actualStage.getAllFiles())
+      destinationTree.createAllFiles(writeBlobFromFile)
       setStage(destinationTree)
       head match {
         case "detached" => {
@@ -313,9 +460,34 @@ case class Repo(repoDir: String) {
       }
     }
   }
+
+  def merge(branchName: String): String = {
+    if (head.mode != "branch") "You must be on a branch to merge a branch"
+    Branch.getBranchOption(branchName, branchExists, branchContent) match {
+      case None => "Sorry, given branch was not founded"
+      case Some(branch) =>
+        (branch.getLastCommit(commitContent), getLastCommit()) match {
+          case (Some(branchCommit), Some(currentCommit)) =>
+            Merge.fromCommits(
+              branchCommit,
+              currentCommit,
+              commitContent,
+              commitExists
+            )
+          case (None, Some(currentCommit)) =>
+            "The branch you're trying to merge has no commit"
+          case (Some(branchCommit), None) =>
+            "The branch you're on has no commit"
+          case (None, None) =>
+            "You cannot merge anything right after initializing your repo"
+        }
+    }
+  }
 }
 
 object Repo {
+  implicit val ioManager: IOManager = IOManager();
+
   def init(path: String): String = {
     val sgitDir = s"${path}${File.separator}.sgit${File.separator}"
     val dirs: Array[String] = Array(
@@ -326,15 +498,25 @@ object Repo {
       s"${sgitDir}branches"
     )
     val files: Array[String] = Array(s"${sgitDir}STAGE", s"${sgitDir}HEAD");
-    if (!FilesIO.dirExists(sgitDir)) {
+    if (!ioManager.dirExists(sgitDir)) {
       try {
-        FilesIO.createDirectories(dirs);
-        FilesIO.createFiles(files);
-        FilesIO.write(s"${sgitDir}branches${File.separator}master", "")
+        ioManager.createDirectories(dirs);
+        ioManager.createFiles(files);
+        ioManager.write(s"${sgitDir}branches${File.separator}")("master", "")
+
+        val initialBranchExists =
+          ioManager.fileExists(s"${sgitDir}branches${File.separator}")(
+            _: String
+          )
+        val initialSaveHeadToRepo = (xml: Node) =>
+          ioManager.saveXml(sgitDir)(xml, "HEAD")
         Head
-          .fromBranchName("master", s"${sgitDir}branches${File.separator}")
+          .fromBranchName(
+            "master",
+            initialBranchExists
+          )
           .get
-          .save(s"${sgitDir}HEAD")
+          .save(initialSaveHeadToRepo)
         return "Repo initialized"
       } catch {
         case e: Exception => e.getMessage();
@@ -344,7 +526,6 @@ object Repo {
     }
   }
 
-  def getRepoDir(): Option[String] = {
-    return FilesIO.getRepoDirPath(".sgit")
-  }
+  def getRepoDir(): Option[Repo] =
+    ioManager.getRepoDirPath(".sgit").map(sgitDir => Repo(sgitDir))
 }

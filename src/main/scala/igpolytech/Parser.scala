@@ -1,6 +1,5 @@
 package igpolytech
 import scopt.OParser
-import java.io.File
 
 case class Config(
     mode: String = "",
@@ -9,6 +8,8 @@ case class Config(
     patch: Boolean = false,
     stats: Boolean = false,
     givenName: String = "",
+    text: String = "",
+    author: String = System.getProperty("user.name"),
     displayAll: Boolean = false,
     verbose: Boolean = false
 )
@@ -49,7 +50,17 @@ object Parser extends App {
         ),
       cmd("commit")
         .action((_, c) => c.copy(mode = "commit"))
-        .text("create a new commit with staged files"),
+        .text("create a new commit with staged files")
+        .children(
+          opt[String]('m', "message")
+            .optional()
+            .text("Message of the commit")
+            .action((message, c) => c.copy(text = message)),
+          opt[String]('a', "author")
+            .optional()
+            .text("Author of the commit")
+            .action((author, c) => c.copy(author = author))
+        ),
       cmd("diff")
         .action((_, c) => c.copy(mode = "diff"))
         .text("display the delta of modified files with staged files"),
@@ -88,10 +99,6 @@ object Parser extends App {
                 failure(
                   "'verbose' option does not make sense with a branch name"
                 )
-              else if (c.mode == "branch" && !c.displayAll && !c.verbose && c.givenName == "")
-                failure(
-                  "You must either put a name or an option. See sgit --help for help"
-                )
               else success
           )
         ),
@@ -117,17 +124,30 @@ object Parser extends App {
         ),
       cmd("merge")
         .action((_, c) => c.copy(mode = "merge"))
-        .text("TODO"),
+        .text(
+          "Will merge given branch into current one. Cannot be done in detached mode"
+        )
+        .children(
+          arg[String]("name")
+            .required()
+            .action((x, c) => c.copy(givenName = x))
+            .text("Branch name")
+        ),
       cmd("rebase")
         .action((_, c) => c.copy(mode = "rebase"))
-        .text("TODO")
+        .text("Not yet impletemented"),
+      checkConfig(
+        c =>
+          if (c.mode == "")
+            failure("There were no command given ! Please see usage.")
+          else success
+      )
     )
   }
 
 // OParser.parse returns Option[Config]
   OParser.parse(parser1, args, Config()) match {
     case Some(config) => {
-
       config.mode match {
         case "init" => {
           println(Repo.init(config.path))
@@ -140,22 +160,23 @@ object Parser extends App {
               )
               System.exit(1)
             }
-            case Some(value) => {
-              val repo: Repo = new Repo(value)
+            case Some(repo) => {
               config.mode match {
-                case "add"    => println(repo.add(config.files))
-                case "commit" => println(repo.commit())
+                case "add" => println(repo.add(config.files))
+                case "commit" =>
+                  println(repo.commit(config.text, config.author))
                 case "branch" =>
-                  if (config.displayAll || config.verbose)
+                  if (config.givenName != "")
+                    println(repo.createBranch(config.givenName))
+                  else
                     println(repo.listBranch(config.displayAll, config.verbose))
-                  else println(repo.createBranch(config.givenName))
                 case "log"  => println(repo.log(config.stats, config.patch))
                 case "diff" => println(repo.diff())
                 case "tag" =>
                   if (config.givenName == "") println(repo.listTags())
                   else println(repo.createTag(config.givenName))
                 case "status"   => println(repo.getStatus())
-                case "merge"    => println("Not yet implemented")
+                case "merge"    => println(repo.merge(config.givenName))
                 case "rebase"   => println("Not yet implemented")
                 case "checkout" => println(repo.checkout(config.givenName))
               }

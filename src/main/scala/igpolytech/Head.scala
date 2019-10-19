@@ -1,5 +1,4 @@
 package igpolytech
-import java.io.File
 import scala.xml.Node
 
 /**
@@ -8,20 +7,25 @@ import scala.xml.Node
   * If in detached mode, then the content will be the commit hash
   */
 case class Head(mode: String, content: String) {
-  def save(headPath: String) = FilesIO.saveXml(this.toXml(), headPath)
+  def save(saveHeadToRepo: (Node) => Unit) =
+    saveHeadToRepo(toXml())
 
   /**
     * This function will return a new Head.
     * If in branch mode : This head is the same but the branch had been saved with newCommitHash
     * If in detached mode : This head will have the new commit hash as content
     */
-  def update(newContent: String, branchesPath: String): Head = {
+  def update(
+      newContent: String,
+      branchContent: (String) => String,
+      saveBranchToRepo: (String, String) => Unit
+  ): Head = {
     mode match {
       case "branch" => {
         Branch
-          .fromBranchName(content, branchesPath)
+          .fromBranchName(content, branchContent)
           .update(newContent)
-          .save(branchesPath)
+          .save(saveBranchToRepo)
         this
       }
       case "detached" => Head(mode, newContent)
@@ -32,17 +36,17 @@ case class Head(mode: String, content: String) {
     * Will return last commit, either from the branch name (if in branch mode) or the commit correponding to the commit we are detached on
     */
   def getLastCommit(
-      branchesPath: String,
-      commitsPath: String
+      commitContent: (String) => Node,
+      branchContent: (String) => String
   ): Option[Commit] = {
     mode match {
       case "branch" =>
         Branch
-          .fromBranchName(content, branchesPath)
-          .getLastCommit(commitsPath)
+          .fromBranchName(content, branchContent)
+          .getLastCommit(commitContent)
       case "detached" => {
         if (content == "") None
-        else Some(Commit.getCommit(content, commitsPath))
+        else Some(Commit.getCommit(content, commitContent))
       }
     }
   }
@@ -51,25 +55,25 @@ case class Head(mode: String, content: String) {
 }
 
 object Head {
-  def exists(branchesPath: String, branchName: String): Boolean =
-    FilesIO.fileExists(s"${branchesPath}$branchName")
+  def exists(
+      branchName: String,
+      branchExists: (String) => Boolean
+  ): Boolean =
+    branchExists(branchName)
 
   def fromCommitHash(commitHash: String): Head =
     Head("detached", commitHash)
 
   def fromBranchName(
       branchName: String,
-      branchesPath: String
-  ): Option[Head] = {
-    if (exists(branchesPath, branchName)) {
+      branchExists: (String) => Boolean
+  ): Option[Head] =
+    if (exists(branchName, branchExists)) {
       Some(Head("branch", branchName))
     } else None
-  }
 
-  def fromHeadFile(headPath: String, commitsPath: String): Head = {
-    val xml = FilesIO.loadXml(headPath)
-    val mode = (xml \@ "mode")
-    val content = (xml).text
-    Head(mode, content)
-  }
+  def fromHeadFile(
+      xml: Node
+  ): Head =
+    Head((xml \@ "mode"), (xml).text)
 }

@@ -4,10 +4,11 @@ import org.scalatest.Matchers
 import java.io.File
 
 class CommitTest extends FunSpec with Matchers {
+  implicit val ioManager = IOManager()
   override def withFixture(test: NoArgTest) = {
     try test()
     finally {
-      if (new File(".sgit").exists()) FilesIO.delete(".sgit")
+      if (new File(".sgit").exists()) ioManager.delete(".sgit")
     }
   }
 
@@ -21,7 +22,9 @@ class CommitTest extends FunSpec with Matchers {
       assert(res.isEmpty)
     }
 
-    it("should ask for completion of CommitMessage file") {
+    it(
+      "should ask for completion of CommitMessage file if no message is given as option"
+    ) {
       Repo.init(".")
       val repo = Repo(".sgit")
       def getFakeContent = () => "toInfinityAndBeyond"
@@ -29,7 +32,7 @@ class CommitTest extends FunSpec with Matchers {
       val tree = new Tree("", Array(), Array(blob))
       repo.setStage(tree)
 
-      val res = repo.commit()
+      val res = repo.commit("")
 
       assert(
         res.contains(
@@ -45,15 +48,14 @@ class CommitTest extends FunSpec with Matchers {
       val blob = new Blob("A113", getFakeContent)
       val tree = new Tree("", Array(), Array(blob))
       repo.setStage(tree)
-      FilesIO.write(".sgit/CommitMessage", "John Lasseter is great")
 
-      val res = repo.commit()
+      val res = repo.commit("John Lasseter is great")
 
       val commitOption = repo.getLastCommit()
       val branchName = repo.head.content
       val commitOptionFromBranch = Branch
-        .fromBranchName(branchName, ".sgit/branches/")
-        .getLastCommit(".sgit/commits/")
+        .fromBranchName(branchName, repo.branchContent)
+        .getLastCommit(repo.commitContent)
       assert(commitOptionFromBranch.isDefined)
       assert(commitOption.isDefined)
       assert(
@@ -69,7 +71,7 @@ class CommitTest extends FunSpec with Matchers {
       Repo.init(".")
       val repo = Repo(".sgit")
 
-      val res = repo.commit()
+      val res = repo.commit("John Lasseter is great")
 
       res shouldBe "Sorry, nothing is to be commited. Use sgit add before commiting"
 

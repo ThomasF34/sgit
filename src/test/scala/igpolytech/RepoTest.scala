@@ -2,14 +2,17 @@ package igpolytech
 
 import java.io.File
 import org.scalatest._
+import scala.xml.Node
 
 class RepoTest extends FunSpec with Matchers {
+  implicit val ioManager = IOManager()
+
   override def withFixture(test: NoArgTest) = {
     try test()
     finally {
-      if (new File("../.sgit").exists()) FilesIO.delete("../.sgit")
-      if (new File("test").exists()) FilesIO.delete("test")
-      if (new File(".sgit").exists()) FilesIO.delete(".sgit")
+      if (new File("../.sgit").exists()) ioManager.delete("../.sgit")
+      if (new File("test").exists()) ioManager.delete("test")
+      if (new File(".sgit").exists()) ioManager.delete(".sgit")
     }
   }
 
@@ -59,11 +62,16 @@ class RepoTest extends FunSpec with Matchers {
       Repo.init(".")
       val repo = Repo(".sgit")
       val tree = Tree("A113")
+      val writeBlobToRepo = (content: String, hash: String) =>
+        ioManager.write(repo.blobsPath)(hash, content)
+      val saveTreeAsXml =
+        (xml: Node, hash: String) =>
+          ioManager.saveXml(repo.treesPath)(xml, hash)
       tree.save(
-        repo.treesPath,
-        repo.blobsPath
+        saveTreeAsXml,
+        writeBlobToRepo
       )
-      FilesIO.write(s".sgit${File.separator}STAGE", tree.hash)
+      ioManager.write(repo.stageDir)(repo.stageFile, tree.hash)
 
       val stageTree = repo.getStage
 
@@ -87,12 +95,18 @@ class RepoTest extends FunSpec with Matchers {
 
       repo.setStage(tree)
 
-      val hash = FilesIO.getHash(s".sgit${File.separator}STAGE")
+      val hash = ioManager.getHash(s".sgit${File.separator}STAGE")
 
       assert(hash.isDefined)
       assert(hash.get.equals(tree.hash))
       assert(
-        Tree.getTree(repo.treesPath, repo.blobsPath, hash.get).equals(tree)
+        Tree
+          .getTree(
+            hash.get,
+            repo.blobContent,
+            repo.treeContent
+          )
+          .equals(tree)
       )
     }
   }
