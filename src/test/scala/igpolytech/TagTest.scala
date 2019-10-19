@@ -37,7 +37,7 @@ class TagTest extends FunSpec with Matchers {
       pending
       Repo.init(".")
       val repo = Repo(".sgit")
-      repo.commit()
+      repo.commit("toInfinityAndBeyond")
       repo.setHead("detached", "abc")
 
       val res = repo.createTag("superTag")

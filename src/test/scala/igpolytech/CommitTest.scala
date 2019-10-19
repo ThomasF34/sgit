@@ -22,7 +22,9 @@ class CommitTest extends FunSpec with Matchers {
       assert(res.isEmpty)
     }
 
-    it("should ask for completion of CommitMessage file") {
+    it(
+      "should ask for completion of CommitMessage file if no message is given as option"
+    ) {
       Repo.init(".")
       val repo = Repo(".sgit")
       def getFakeContent = () => "toInfinityAndBeyond"
@@ -30,7 +32,7 @@ class CommitTest extends FunSpec with Matchers {
       val tree = new Tree("", Array(), Array(blob))
       repo.setStage(tree)
 
-      val res = repo.commit()
+      val res = repo.commit("")
 
       assert(
         res.contains(
@@ -46,9 +48,8 @@ class CommitTest extends FunSpec with Matchers {
       val blob = new Blob("A113", getFakeContent)
       val tree = new Tree("", Array(), Array(blob))
       repo.setStage(tree)
-      ioManager.write(".sgit/")("CommitMessage", "John Lasseter is great")
 
-      val res = repo.commit()
+      val res = repo.commit("John Lasseter is great")
 
       val commitOption = repo.getLastCommit()
       val branchName = repo.head.content
@@ -70,7 +71,7 @@ class CommitTest extends FunSpec with Matchers {
       Repo.init(".")
       val repo = Repo(".sgit")
 
-      val res = repo.commit()
+      val res = repo.commit("John Lasseter is great")
 
       res shouldBe "Sorry, nothing is to be commited. Use sgit add before commiting"
 

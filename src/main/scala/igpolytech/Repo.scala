@@ -158,27 +158,36 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
     "Changes added"
   }
 
-  def commit() = {
+  def commit(message: String) = {
 
     def checkMessageAndCommitTree(
         stage: Tree,
         lastCommitHash: String
     ): String = {
       //Before commiting a tree we need to ask for a commit text
-      val commitTextPath = s"${commitMessageDir}$commitMessageFile"
-      if (ioManager.fileExists(commitMessageDir)(commitMessageFile)) {
-        val commitMessage =
-          ioManager.getContent(commitMessageDir)(commitMessageFile)
-        ioManager.delete(commitTextPath)
+      if (message != "")
         commitWithMessage(
-          commitMessage,
+          message,
           "NO AUTOR FOR NOW TODO",
           stage,
           lastCommitHash
         )
-      } else {
-        ioManager.createFiles(Array(commitTextPath))
-        s"Please edit the commit message file with the commit message and use the commit command again \n Commit Message file is located at ${commitTextPath}"
+      else {
+        val commitTextPath = s"${commitMessageDir}$commitMessageFile"
+        if (ioManager.fileExists(commitMessageDir)(commitMessageFile)) {
+          val commitMessage =
+            ioManager.getContent(commitMessageDir)(commitMessageFile)
+          ioManager.delete(commitTextPath)
+          commitWithMessage(
+            commitMessage,
+            "NO AUTOR FOR NOW TODO",
+            stage,
+            lastCommitHash
+          )
+        } else {
+          ioManager.createFiles(Array(commitTextPath))
+          s"Please edit the commit message file with the commit message and use the commit command again \n Commit Message file is located at ${commitTextPath}"
+        }
       }
     }
 

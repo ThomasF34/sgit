@@ -8,6 +8,7 @@ case class Config(
     patch: Boolean = false,
     stats: Boolean = false,
     givenName: String = "",
+    text: String = "",
     displayAll: Boolean = false,
     verbose: Boolean = false
 )
@@ -48,7 +49,13 @@ object Parser extends App {
         ),
       cmd("commit")
         .action((_, c) => c.copy(mode = "commit"))
-        .text("create a new commit with staged files"),
+        .text("create a new commit with staged files")
+        .children(
+          opt[String]('m', "message")
+            .optional()
+            .text("Message of the commit")
+            .action((message, c) => c.copy(text = message))
+        ),
       cmd("diff")
         .action((_, c) => c.copy(mode = "diff"))
         .text("display the delta of modified files with staged files"),
@@ -155,7 +162,7 @@ object Parser extends App {
             case Some(repo) => {
               config.mode match {
                 case "add"    => println(repo.add(config.files))
-                case "commit" => println(repo.commit())
+                case "commit" => println(repo.commit(config.text))
                 case "branch" =>
                   if (config.displayAll || config.verbose)
                     println(repo.listBranch(config.displayAll, config.verbose))
