@@ -22,8 +22,8 @@ object FilesIO {
     new File(s"${current.getAbsolutePath()}${File.separatorChar}$dir")
       .isDirectory()
 
-  def fileExists(path: String): Boolean =
-    new File(path)
+  def fileExists(dir: String)(path: String*): Boolean =
+    new File(s"${dir}${path.mkString}")
       .isFile()
 
   /**

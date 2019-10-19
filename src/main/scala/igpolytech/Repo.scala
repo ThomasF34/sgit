@@ -15,6 +15,13 @@ case class Repo(repoDir: String) {
   val stageDir = s"${repoDir}${File.separator}"
   val stageFile = "STAGE"
 
+  val commitMessageDir = s"${repoDir}${File.separator}"
+  val commitMessageFile = "CommitMessage"
+
+  val projectDir = repoDir match {
+    case s"${value}.sgit" => value
+  }
+
   val commitContent = (hash: String) =>
     FilesIO.loadXml(s"${commitsPath}${hash}")
   val branchContent = (name: String) =>
@@ -30,14 +37,19 @@ case class Repo(repoDir: String) {
     FilesIO.loadXml(s"${treesPath}$treeHash")
   val headContent = () => FilesIO.loadXml(s"${headDir}$headFile")
 
-  val blobExists = (treeName: String) =>
-    (blobName: String) =>
-      FilesIO.fileExists(s"${projectDir}${treeName}${blobName}")
-  val tagExists = (name: String) => FilesIO.fileExists(s"${tagsPath}$name")
-  val commitExists = (hash: String) =>
-    FilesIO.fileExists(s"${commitsPath}$hash")
-  val branchExists = (name: String) =>
-    FilesIO.fileExists(s"${branchesPath}$name")
+  def tagExists = FilesIO.fileExists(tagsPath)(_: String)
+  def commitExists = FilesIO.fileExists(commitsPath)(_: String)
+  def branchExists = FilesIO.fileExists(branchesPath)(_: String)
+  def blobExists(treeName: String)(blobName: String) =
+    FilesIO.fileExists(projectDir)(treeName, blobName)
+  // val blobExists = (treeName: String) =>
+  //   (blobName: String) =>
+  //     FilesIO.fileExists(s"${projectDir}${treeName}${blobName}")
+  // val tagExists = (name: String) => FilesIO.fileExists(s"${tagsPath}$name")
+  // val commitExists = (hash: String) =>
+  //   FilesIO.fileExists(s"${commitsPath}$hash")
+  // val branchExists = (name: String) =>
+  //   FilesIO.fileExists(s"${branchesPath}$name")
 
   def saveCommitToRepo = FilesIO.saveXml(commitsPath)(_, _)
   def saveTreeToRepo = FilesIO.saveXml(treesPath)(_, _)
@@ -64,9 +76,6 @@ case class Repo(repoDir: String) {
     FilesIO.write(s"${projectDir}${tree}")(blob, content)
 
   def head: Head = Head.fromHeadFile(headContent)
-  val projectDir = repoDir match {
-    case s"${value}.sgit" => value
-  }
 
   def getStatus(): String = {
     s"${getHeadStatus()}\n# Stagged \n${getStaggedStatus()} \n\n# Modified \n${getModifiedStatus()} \n\n# Untracked \n${getUntrackedStatus()}\n"
@@ -180,8 +189,9 @@ case class Repo(repoDir: String) {
         lastCommitHash: String
     ): String = {
       //Before commiting a tree we need to ask for a commit text
+      //TODO DELETE ME
       val commitTextPath = s"${repoDir}${File.separator}CommitMessage"
-      if (FilesIO.fileExists(commitTextPath)) {
+      if (FilesIO.fileExists(commitMessageDir)(commitMessageFile)) {
         val commitMessage = FilesIO.getContent(commitTextPath)
         FilesIO.delete(commitTextPath)
         commitWithMessage(
@@ -479,8 +489,8 @@ object Repo {
         FilesIO.write(s"${sgitDir}branches${File.separator}")("master", "")
 
         //TODO DELETE ME
-        val initialBranchExists = (branchName: String) =>
-          FilesIO.fileExists(s"${sgitDir}branches${File.separator}$branchName")
+        val initialBranchExists =
+          FilesIO.fileExists(s"${sgitDir}branches${File.separator}")(_: String)
         val initialSaveHeadToRepo = (xml: Node) =>
           FilesIO.saveXml(sgitDir)(xml, "HEAD")
         Head
