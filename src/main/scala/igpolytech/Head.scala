@@ -17,13 +17,18 @@ case class Head(mode: String, content: String) {
     * If in branch mode : This head is the same but the branch had been saved with newCommitHash
     * If in detached mode : This head will have the new commit hash as content
     */
-  def update(newContent: String, branchesPath: String): Head = {
+  def update(
+      newContent: String,
+      branchesPath: String,
+      branchContent: (String) => String,
+      saveBranchToRepo: (String, String) => Unit
+  ): Head = {
     mode match {
       case "branch" => {
         Branch
-          .fromBranchName(content, branchesPath)
+          .fromBranchName(content, branchContent)
           .update(newContent)
-          .save(branchesPath)
+          .save(saveBranchToRepo)
         this
       }
       case "detached" => Head(mode, newContent)
@@ -34,18 +39,18 @@ case class Head(mode: String, content: String) {
     * Will return last commit, either from the branch name (if in branch mode) or the commit correponding to the commit we are detached on
     */
   def getLastCommit(
-      branchesPath: String,
-      commitsPath: String,
-      commitContent: (String) => Node
+      commitContent: (String) => Node,
+      branchContent: (String) => String
   ): Option[Commit] = {
     //TODO DELETE ME
     // val commitContent = (hash: String) =>
     //   FilesIO.loadXml(s"${commitsPath}${hash}")
+
     mode match {
       case "branch" =>
         Branch
-          .fromBranchName(content, branchesPath)
-          .getLastCommit(commitsPath)
+          .fromBranchName(content, branchContent)
+          .getLastCommit(commitContent)
       case "detached" => {
         if (content == "") None
         else Some(Commit.getCommit(content, commitContent))

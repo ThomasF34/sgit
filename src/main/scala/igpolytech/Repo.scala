@@ -39,12 +39,22 @@ case class Repo(repoDir: String) {
     //TODO DELETE ME
     val commitContent = (hash: String) =>
       FilesIO.loadXml(s"${commitsPath}${hash}")
-    head.getLastCommit(branchesPath, commitsPath, commitContent)
+
+    val branchContent = (name: String) =>
+      FilesIO.getContent(s"${branchesPath}$name")
+    head.getLastCommit(commitContent, branchContent)
   }
 
   def setLastCommit(newCommitHash: String) = {
+    //TODO DELETE ME
     val saveHeadToRepo = (xml: Node) => FilesIO.saveXml(xml, headPath)
-    head.update(newCommitHash, branchesPath).save(saveHeadToRepo)
+    val branchContent = (name: String) =>
+      FilesIO.getContent(s"${branchesPath}$name")
+    val saveBranchToRepo = (name: String, content: String) =>
+      FilesIO.write(s"${branchesPath}$name", content)
+    head
+      .update(newCommitHash, branchesPath, branchContent, saveBranchToRepo)
+      .save(saveHeadToRepo)
   }
 
   def setHead(headMode: String, commitHash: String) = {
@@ -324,6 +334,8 @@ case class Repo(repoDir: String) {
     //TODO DELETE ME
     val commitContent = (hash: String) =>
       FilesIO.loadXml(s"${commitsPath}${hash}")
+    val branchContent = (name: String) =>
+      FilesIO.getContent(s"${branchesPath}$name")
 
     def loop(commit: Commit, detailList: Array[String]): Array[String] = {
       if (commit.parentHash == "")
@@ -349,7 +361,7 @@ case class Repo(repoDir: String) {
     }
 
     val headCommit =
-      head.getLastCommit(branchesPath, commitsPath, commitContent)
+      head.getLastCommit(commitContent, branchContent)
     headCommit match {
       case Some(commit) => loop(commit, Array()).mkString("\n")
       case None         => "No commit"
@@ -374,6 +386,10 @@ case class Repo(repoDir: String) {
       FilesIO.fileExists(s"${commitsPath}$hash")
     val tagExists = (name: String) => FilesIO.fileExists(s"${tagsPath}$name")
     val tagContent = (name: String) => FilesIO.getContent(s"${tagsPath}$name")
+    val branchExists = (name: String) =>
+      FilesIO.fileExists(s"${branchesPath}$name")
+    val branchContent = (name: String) =>
+      FilesIO.getContent(s"${branchesPath}$name")
 
     //First checking if there's anything modified
     getStage() match {
@@ -398,9 +414,9 @@ case class Repo(repoDir: String) {
             .map(commit => (commit, "detached"))
             .orElse(
               Branch
-                .getBranchOption(to, branchesPath)
+                .getBranchOption(to, branchExists, branchContent)
                 .flatMap(
-                  _.getLastCommit(commitsPath)
+                  _.getLastCommit(commitContent)
                     .map(commit => (commit, to))
                 )
             )
@@ -490,12 +506,16 @@ case class Repo(repoDir: String) {
       FilesIO.loadXml(s"${commitsPath}${hash}")
     val commitExists = (hash: String) =>
       FilesIO.fileExists(s"${commitsPath}$hash")
+    val branchExists = (name: String) =>
+      FilesIO.fileExists(s"${branchesPath}$name")
+    val branchContent = (name: String) =>
+      FilesIO.getContent(s"${branchesPath}$name")
 
     if (head.mode != "branch") "You must be on a branch to merge a branch"
-    Branch.getBranchOption(branchName, branchesPath) match {
+    Branch.getBranchOption(branchName, branchExists, branchContent) match {
       case None => "Sorry, given branch was not founded"
       case Some(branch) =>
-        (branch.getLastCommit(commitsPath), getLastCommit()) match {
+        (branch.getLastCommit(commitContent), getLastCommit()) match {
           case (Some(branchCommit), Some(currentCommit)) =>
             Merge.fromCommits(
               branchCommit,
