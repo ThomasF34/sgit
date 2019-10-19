@@ -4,10 +4,11 @@ import org.scalatest.Matchers
 import java.io.File
 
 class TreeTest extends FunSpec with Matchers {
+  implicit val ioManager = IOManager()
   override def withFixture(test: NoArgTest) = {
     try test()
     finally {
-      if (new File("testDir").exists()) FilesIO.delete("testDir")
+      if (new File("testDir").exists()) ioManager.delete("testDir")
     }
   }
 
@@ -43,15 +44,15 @@ class TreeTest extends FunSpec with Matchers {
     }
 
     it("should create tree from string array") {
-      FilesIO.createDirectories(Array("testDir"))
+      ioManager.createDirectories(Array("testDir"))
       val fakeProjectDir =
         s"${new File(".").getCanonicalPath()}${File.separator}"
-      FilesIO.write(s"testDir${File.separator}")("test", "abc")
+      ioManager.write(s"testDir${File.separator}")("test", "abc")
 
-      val allFiles = (f: File) => FilesIO.getAllFiles(f)
+      val allFiles = (f: File) => ioManager.getAllFiles(f)
       val fileContent = (dirName: String) =>
         (fileName: String) =>
-          FilesIO.getContent(s"${fakeProjectDir}${dirName}")(fileName)
+          ioManager.getContent(s"${fakeProjectDir}${dirName}")(fileName)
 
       val createdTree =
         Tree.createFromList(

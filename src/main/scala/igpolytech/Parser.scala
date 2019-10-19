@@ -146,8 +146,7 @@ object Parser extends App {
               )
               System.exit(1)
             }
-            case Some(value) => {
-              val repo: Repo = new Repo(value)
+            case Some(repo) => {
               config.mode match {
                 case "add"    => println(repo.add(config.files))
                 case "commit" => println(repo.commit())
