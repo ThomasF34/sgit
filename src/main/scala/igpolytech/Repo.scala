@@ -264,16 +264,26 @@ case class Repo(repoDir: String) {
   }
 
   def listTags(): String = {
-    val tags = Tag.allTags(tagsPath)
+    //TODO Delete me
+    val tagContent = (name: String) => FilesIO.getContent(s"${tagsPath}$name")
+    val tags =
+      Tag.allTags(FilesIO.getAllFilesPath(tagsPath), tagContent)
     if (!tags.isEmpty) s"Tags:\n - ${tags.mkString("\n - ")}"
     else "No tags created. See sgit tag <name> to create one"
   }
 
   def createTag(tagName: String): String = {
-    if (Tag.exists(tagName, tagsPath))
+    //TODO DELETE ME
+    val tagExists = (name: String) => FilesIO.fileExists(s"${tagsPath}$name")
+
+    if (Tag.exists(tagName, tagExists))
       "Sorry tag name is already used"
     else {
-      Tag(tagName, FilesIO.getContent(headPath)).save(tagsPath)
+      //TODO delete me
+      val saveTagToRepo = (name: String, hash: String) =>
+        FilesIO.write(s"${tagsPath}$name", hash)
+
+      Tag(tagName, FilesIO.getContent(headPath)).save(saveTagToRepo)
       s"Tag $tagName created"
     }
   }
@@ -362,6 +372,8 @@ case class Repo(repoDir: String) {
       FilesIO.loadXml(s"${commitsPath}${hash}")
     val commitExists = (hash: String) =>
       FilesIO.fileExists(s"${commitsPath}$hash")
+    val tagExists = (name: String) => FilesIO.fileExists(s"${tagsPath}$name")
+    val tagContent = (name: String) => FilesIO.getContent(s"${tagsPath}$name")
 
     //First checking if there's anything modified
     getStage() match {
@@ -394,8 +406,8 @@ case class Repo(repoDir: String) {
             )
             .orElse(
               Tag
-                .fromName(to, tagsPath)
-                .flatMap(_.getCommit(commitsPath))
+                .fromName(to, tagExists, tagContent)
+                .flatMap(_.getCommit(commitContent, commitExists))
                 .map(tagCommit => (tagCommit, "detached"))
             )
           // val commitWithHeadMode = toCommitOption match {

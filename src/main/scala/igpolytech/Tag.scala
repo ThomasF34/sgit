@@ -1,16 +1,22 @@
 package igpolytech
+import scala.xml.Node
 
 case class Tag(name: String, hash: String) {
-  def save(tagsPath: String) = {
-    FilesIO.write(s"${tagsPath}$name", hash)
+  def save(saveTagToRepo: (String, String) => Unit) = {
+    //TODO old
+    // FilesIO.write(s"${tagsPath}$name", hash)
+    saveTagToRepo(name, hash)
   }
 
-  def getCommit(commitsPath: String): Option[Commit] = {
+  def getCommit(
+      commitContent: (String) => Node,
+      commitExists: (String) => Boolean
+  ): Option[Commit] = {
     //TODO DELETE ME
-    val commitContent = (hash: String) =>
-      FilesIO.loadXml(s"${commitsPath}${hash}")
-    val commitExists = (hash: String) =>
-      FilesIO.fileExists(s"${commitsPath}$hash")
+    // val commitContent = (hash: String) =>
+    //   FilesIO.loadXml(s"${commitsPath}${hash}")
+    // val commitExists = (hash: String) =>
+    //   FilesIO.fileExists(s"${commitsPath}$hash")
 
     Commit.getCommitOption(hash, commitContent, commitExists)
   }
@@ -18,19 +24,29 @@ case class Tag(name: String, hash: String) {
 }
 
 object Tag {
-  def exists(name: String, tagsPath: String): Boolean = {
-    FilesIO.fileExists(s"${tagsPath}$name")
+  def exists(name: String, tagExists: (String) => Boolean): Boolean = {
+    //TODO old
+    // FilesIO.fileExists(s"${tagsPath}$name")
+    tagExists(name)
   }
 
-  def allTags(tagsPath: String): Array[Tag] = {
-    FilesIO
-      .getAllFilesPath(tagsPath)
-      .map(tagName => Tag(tagName, FilesIO.getContent(s"${tagsPath}$tagName")))
+  def allTags(
+      allTagsFiles: Array[String],
+      tagContent: (String) => String
+  ): Array[Tag] = {
+    allTagsFiles
+    // TODO old .map(tagName => Tag(tagName, FilesIO.getContent(s"${tagsPath}$tagName")))
+      .map(tagName => Tag(tagName, tagContent(tagName)))
   }
 
-  def fromName(name: String, tagsPath: String): Option[Tag] = {
-    if (exists(name, tagsPath))
-      Some(Tag(name, FilesIO.getContent(s"${tagsPath}$name")))
+  def fromName(
+      name: String,
+      tagExists: (String) => Boolean,
+      tagContent: (String) => String
+  ): Option[Tag] = {
+    if (exists(name, tagExists))
+      // TODO old Some(Tag(name, FilesIO.getContent(s"${tagsPath}$name")))
+      Some(Tag(name, tagContent(name)))
     else None
   }
 }
