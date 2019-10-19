@@ -10,7 +10,10 @@ case class Repo(repoDir: String) {
   val tagsPath = s"${repoDir}${File.separator}tags${File.separator}"
   val headPath = s"${repoDir}${File.separator}HEAD"
 
-  def head: Head = Head.fromHeadFile(headPath, commitsPath)
+  // TODO delete me
+  val headContent = () => FilesIO.loadXml(headPath)
+
+  def head: Head = Head.fromHeadFile(headContent)
   val projectDir = repoDir match {
     case s"${value}.sgit" => value
   }
@@ -33,15 +36,21 @@ case class Repo(repoDir: String) {
   }
 
   def getLastCommit(): Option[Commit] = {
-    head.getLastCommit(branchesPath, commitsPath)
+    //TODO DELETE ME
+    val commitContent = (hash: String) =>
+      FilesIO.loadXml(s"${commitsPath}${hash}")
+    head.getLastCommit(branchesPath, commitsPath, commitContent)
   }
 
   def setLastCommit(newCommitHash: String) = {
-    head.update(newCommitHash, branchesPath).save(headPath)
+    val saveHeadToRepo = (xml: Node) => FilesIO.saveXml(xml, headPath)
+    head.update(newCommitHash, branchesPath).save(saveHeadToRepo)
   }
 
-  def setHead(headMode: String, commitHash: String) =
-    Head(headMode, commitHash).save(headPath)
+  def setHead(headMode: String, commitHash: String) = {
+    val saveHeadToRepo = (xml: Node) => FilesIO.saveXml(xml, headPath)
+    Head(headMode, commitHash).save(saveHeadToRepo)
+  }
 
   private def getStaggedStatus(): String = {
     //TODO DELETE ME
@@ -329,7 +338,8 @@ case class Repo(repoDir: String) {
         )
     }
 
-    val headCommit = head.getLastCommit(branchesPath, commitsPath)
+    val headCommit =
+      head.getLastCommit(branchesPath, commitsPath, commitContent)
     headCommit match {
       case Some(commit) => loop(commit, Array()).mkString("\n")
       case None         => "No commit"
@@ -497,10 +507,19 @@ object Repo {
         FilesIO.createDirectories(dirs);
         FilesIO.createFiles(files);
         FilesIO.write(s"${sgitDir}branches${File.separator}master", "")
+
+        //TODO DELETE ME
+        val branchExists = (branchName: String) =>
+          FilesIO.fileExists(s"${sgitDir}branches${File.separator}$branchName")
+        val saveHeadToRepo = (xml: Node) =>
+          FilesIO.saveXml(xml, s"${sgitDir}HEAD")
         Head
-          .fromBranchName("master", s"${sgitDir}branches${File.separator}")
+          .fromBranchName(
+            "master",
+            branchExists
+          )
           .get
-          .save(s"${sgitDir}HEAD")
+          .save(saveHeadToRepo)
         return "Repo initialized"
       } catch {
         case e: Exception => e.getMessage();
