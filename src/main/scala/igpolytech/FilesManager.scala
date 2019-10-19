@@ -5,18 +5,14 @@ import scala.annotation.tailrec
 import java.io.BufferedReader
 import scala.xml.Node
 import java.io.FileWriter
-import java.security.MessageDigest
 import scala.io.Source
-import scala.io.BufferedSource
 
 object FilesIO {
-  def createDirectories(dirs: Array[String]) = {
-    dirs.foreach(dir => new File(dir).mkdirs());
-  }
 
-  def createFiles(paths: Array[String]) = {
-    paths.foreach(path => new File(path).createNewFile())
-  }
+  // UTILS
+  val separator: String = File.separator
+
+  // INPUTS
 
   /**
     * Returns true if the given dir is existing in the given File object
@@ -26,9 +22,23 @@ object FilesIO {
     new File(s"${current.getAbsolutePath()}${File.separatorChar}$dir")
       .isDirectory()
 
-  def fileExists(path: String): Boolean =
-    new File(path)
+  def fileExists(dir: String)(path: String): Boolean =
+    new File(s"${dir}$path")
       .isFile()
+
+  def emptyFile(filePath: String): Boolean = {
+    val file = new File(filePath)
+    val reader: BufferedReader = new BufferedReader(new FileReader(file))
+    reader.readLine() == null
+  }
+
+  def getHash(filePath: String): Option[String] = {
+    val file = new File(filePath)
+    val reader: BufferedReader = new BufferedReader(new FileReader(file))
+    val line = reader.readLine()
+    if (line == null) None
+    else Some(line)
+  }
 
   /**
     * Searchs recursively for the repo dir until reaching the root dir
@@ -48,18 +58,15 @@ object FilesIO {
     }
   }
 
-  def emptyFile(filePath: String): Boolean = {
-    val file = new File(filePath)
-    val reader: BufferedReader = new BufferedReader(new FileReader(file))
-    reader.readLine() == null
+  def loadXml(dir: String)(file: String): Node = {
+    scala.xml.XML.loadFile(s"${dir}$file")
   }
 
-  def getHash(filePath: String): Option[String] = {
-    val file = new File(filePath)
-    val reader: BufferedReader = new BufferedReader(new FileReader(file))
-    val line = reader.readLine()
-    if (line == null) None
-    else Some(line)
+  def getContent(dir: String)(filename: String): String = {
+    val file = new File(s"${dir}$filename")
+    if (file.exists() && file.isFile()) {
+      Source.fromFile(file).mkString
+    } else ""
   }
 
   def getAllFilesPath(pathDir: String): Array[String] = {
@@ -67,7 +74,7 @@ object FilesIO {
     getAllFilesPath(file)
   }
 
-  def getAllFilesPath(dir: File, prefix: String = ""): Array[String] = {
+  private def getAllFilesPath(dir: File, prefix: String = ""): Array[String] = {
     val (files, dirs) = dir
       .listFiles()
       .filter(_.getName() != ".sgit")
@@ -94,6 +101,15 @@ object FilesIO {
         .filter(_.getName() != ".sgit")
         .flatMap(getAllFiles(_))
   }
+  // OUTPUTS
+
+  def createDirectories(dirs: Array[String]) = {
+    dirs.foreach(dir => new File(dir).mkdirs());
+  }
+
+  def createFiles(paths: Array[String]) = {
+    paths.foreach(path => new File(path).createNewFile())
+  }
 
   def delete(path: String): Unit = {
     val file = new File(path)
@@ -114,8 +130,8 @@ object FilesIO {
     * Write the content in the given file.
     * File will be created if does not exist
     */
-  def write(path: String, content: String) = {
-    val file = new File(path)
+  def write(dir: String)(filename: String, content: String) = {
+    val file = new File(s"${dir}$filename")
     if (!file.exists()) {
       file.createNewFile()
     }
@@ -125,26 +141,10 @@ object FilesIO {
     writer.close()
   }
 
-  def saveXml(content: Node, path: String) = {
-    scala.xml.XML.save(path, content);
+  def saveXml(dir: String)(content: Node, file: String) = {
+    scala.xml.XML.save(s"${dir}$file", content);
   }
 
-  def loadXml(path: String): Node = {
-    scala.xml.XML.loadFile(path)
-  }
+  // END
 
-  def getContent(path: String): String = {
-    val file = new File(path)
-    if (file.exists() && file.isFile()) {
-      Source.fromFile(file).mkString
-    } else ""
-  }
-
-  def generateHash(forString: String): String = {
-    MessageDigest
-      .getInstance("SHA-1")
-      .digest(forString.getBytes("UTF-8"))
-      .map("%02x".format(_))
-      .mkString
-  }
 }

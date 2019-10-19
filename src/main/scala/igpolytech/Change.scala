@@ -1,5 +1,4 @@
 package igpolytech
-import scala.collection.immutable.Stream.Cons
 
 object ChangeType extends Enumeration {
   type ChangeType = Value

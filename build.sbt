@@ -14,6 +14,11 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.2.0"
   )
 
+scalacOptions ++= Seq(
+  "-Xlint:unused",
+  "-deprecation"
+)
+
 assemblyOption in assembly := (assemblyOption in assembly).value
   .copy(prependShellScript = Some(defaultUniversalScript(shebang = false)))
 

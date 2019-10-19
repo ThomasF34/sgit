@@ -1,29 +1,35 @@
 package igpolytech
+import scala.xml.Node
 
 case class Tag(name: String, hash: String) {
-  def save(tagsPath: String) = {
-    FilesIO.write(s"${tagsPath}$name", hash)
-  }
+  def save(saveTagToRepo: (String, String) => Unit) =
+    saveTagToRepo(name, hash)
 
-  def getCommit(commitsPath: String): Option[Commit] =
-    Commit.getCommitOption(hash, commitsPath)
+  def getCommit(
+      commitContent: (String) => Node,
+      commitExists: (String) => Boolean
+  ): Option[Commit] =
+    Commit.getCommitOption(hash, commitContent, commitExists)
 
 }
 
 object Tag {
-  def exists(name: String, tagsPath: String): Boolean = {
-    FilesIO.fileExists(s"${tagsPath}$name")
-  }
+  def exists(name: String, tagExists: (String) => Boolean): Boolean =
+    tagExists(name)
 
-  def allTags(tagsPath: String): Array[Tag] = {
-    FilesIO
-      .getAllFilesPath(tagsPath)
-      .map(tagName => Tag(tagName, FilesIO.getContent(s"${tagsPath}$tagName")))
-  }
+  def allTags(
+      allTagsFiles: Array[String],
+      tagContent: (String) => String
+  ): Array[Tag] =
+    allTagsFiles
+      .map(tagName => Tag(tagName, tagContent(tagName)))
 
-  def fromName(name: String, tagsPath: String): Option[Tag] = {
-    if (exists(name, tagsPath))
-      Some(Tag(name, FilesIO.getContent(s"${tagsPath}$name")))
+  def fromName(
+      name: String,
+      tagExists: (String) => Boolean,
+      tagContent: (String) => String
+  ): Option[Tag] =
+    if (exists(name, tagExists))
+      Some(Tag(name, tagContent(name)))
     else None
-  }
 }

@@ -15,29 +15,40 @@ class TagTest extends FunSpec with Matchers {
     it("should not create tag if already exists") {
       Repo.init(".")
       val repo = Repo(".sgit")
-      FilesIO.write(s"${repo.tagsPath}superTag", "abc")
+      FilesIO.write(repo.tagsPath)("superTag", "abc")
 
       val res = repo.createTag("superTag")
 
       res shouldBe "Sorry tag name is already used"
     }
 
-    it("should create tag with head content inside") {
+    it("should not create tag if the head does not point to a specific commit") {
       Repo.init(".")
       val repo = Repo(".sgit")
-      FilesIO.write(s".sgit${File.separator}HEAD", "headHash")
+
+      val res = repo.createTag("superTag")
+
+      res shouldBe "The head your repository does not point towards a commit. Please commit before creating a tag"
+    }
+
+    it("should create tag with head content inside") {
+      pending
+      Repo.init(".")
+      val repo = Repo(".sgit")
+      repo.commit()
+      repo.setHead("detached", "abc")
 
       val res = repo.createTag("superTag")
 
       res shouldBe "Tag superTag created"
-      FilesIO.getContent(s"${repo.tagsPath}superTag") shouldBe "headHash"
+      FilesIO.getContent(repo.tagsPath)("superTag") shouldBe "test"
     }
 
     it("should list the existing tags") {
       Repo.init(".")
       val repo = Repo(".sgit")
-      FilesIO.write(s".sgit${File.separator}HEAD", "headHash")
-      repo.createTag("superTag")
+
+      FilesIO.write(repo.tagsPath)("superTag", "A113")
 
       val res = repo.listTags()
 

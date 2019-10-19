@@ -1,14 +1,21 @@
 package igpolytech
 import scala.annotation.tailrec
+import scala.xml.Node
 
 object Merge {
   def fromCommits(
       firstCommit: Commit,
       secondCommit: Commit,
-      commitsPath: String
+      commitContent: (String) => Node,
+      commitExists: (String) => Boolean
   ) = {
     val ancestorCommit =
-      Commit.getAncestorCommit(firstCommit, secondCommit, commitsPath)
+      Commit.getAncestorCommit(
+        firstCommit,
+        secondCommit,
+        commitContent,
+        commitExists
+      )
 
     val new1 = "Y\nA\nA\nB"
     val common = "Y\nY\nY\nY\nY\nA\nA\nK\nB"

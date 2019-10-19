@@ -45,15 +45,15 @@ class CommitTest extends FunSpec with Matchers {
       val blob = new Blob("A113", getFakeContent)
       val tree = new Tree("", Array(), Array(blob))
       repo.setStage(tree)
-      FilesIO.write(".sgit/CommitMessage", "John Lasseter is great")
+      FilesIO.write(".sgit/")("CommitMessage", "John Lasseter is great")
 
       val res = repo.commit()
 
       val commitOption = repo.getLastCommit()
       val branchName = repo.head.content
       val commitOptionFromBranch = Branch
-        .fromBranchName(branchName, ".sgit/branches/")
-        .getLastCommit(".sgit/commits/")
+        .fromBranchName(branchName, repo.branchContent)
+        .getLastCommit(repo.commitContent)
       assert(commitOptionFromBranch.isDefined)
       assert(commitOption.isDefined)
       assert(

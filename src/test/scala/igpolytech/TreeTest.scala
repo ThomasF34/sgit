@@ -1,8 +1,6 @@
 package igpolytech
-import java.security.MessageDigest
 import org.scalatest._
 import org.scalatest.Matchers
-import scala.xml.Node
 import java.io.File
 
 class TreeTest extends FunSpec with Matchers {
@@ -46,13 +44,21 @@ class TreeTest extends FunSpec with Matchers {
 
     it("should create tree from string array") {
       FilesIO.createDirectories(Array("testDir"))
-      val fakeProjectDir = new File(".").getCanonicalPath()
-      FilesIO.write(s"testDir${File.separator}test", "abc")
+      val fakeProjectDir =
+        s"${new File(".").getCanonicalPath()}${File.separator}"
+      FilesIO.write(s"testDir${File.separator}")("test", "abc")
+
+      val allFiles = (f: File) => FilesIO.getAllFiles(f)
+      val fileContent = (dirName: String) =>
+        (fileName: String) =>
+          FilesIO.getContent(s"${fakeProjectDir}${dirName}")(fileName)
 
       val createdTree =
         Tree.createFromList(
           Array("testDir"),
-          s"${fakeProjectDir}${File.separator}"
+          fakeProjectDir,
+          allFiles,
+          fileContent
         )
 
       assert(

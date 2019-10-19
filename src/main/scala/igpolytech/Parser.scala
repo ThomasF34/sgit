@@ -1,6 +1,5 @@
 package igpolytech
 import scopt.OParser
-import java.io.File
 
 case class Config(
     mode: String = "",
@@ -128,7 +127,7 @@ object Parser extends App {
         ),
       cmd("rebase")
         .action((_, c) => c.copy(mode = "rebase"))
-        .text("TODO")
+        .text("Not yet impletemented")
     )
   }
 
