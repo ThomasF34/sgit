@@ -1,5 +1,6 @@
 package igpolytech
 import java.io.File
+import scala.xml.Node
 
 case class Repo(repoDir: String) {
   val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
@@ -40,19 +41,30 @@ case class Repo(repoDir: String) {
     Head(headMode, commitHash).save(headPath)
 
   private def getStaggedStatus(): String = {
+    //TODO DELETE ME
+    val blobContent = (blobHash: String) =>
+      FilesIO.getContent(s"${blobsPath}$blobHash")
+    val treeContent = (treeHash: String) =>
+      FilesIO.loadXml(s"${treesPath}$treeHash")
+
     val hash = FilesIO.getHash(s"${repoDir}${File.separator}STAGE")
     hash match {
       case None => "-- Nothing in stage --"
       case Some(treeHash) => {
         val stageTree: Tree =
           Tree.getTree(
-            treesPath,
-            blobsPath,
-            treeHash
+            treeHash,
+            blobContent,
+            treeContent
           )
         getLastCommit() match {
           case Some(commit) => {
-            val commitTree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
+            val commitTree =
+              Tree.getTree(
+                commit.treeHash,
+                blobContent,
+                treeContent
+              )
             val diff = Diff.fromTrees(commitTree, stageTree)
             if (diff.isEmpty) "-- Nothing in stage --"
             else diff.mkString("\n")
@@ -68,7 +80,21 @@ case class Repo(repoDir: String) {
   private def getModifiedStatus(): String = {
     getStage() match {
       case Some(stage) => {
-        val diff = stage.getModified(projectDir, blobsPath)
+        //TODO Delete me
+        val blobExists = (treeName: String) =>
+          (blobName: String) =>
+            FilesIO.fileExists(s"${projectDir}${treeName}${blobName}")
+        val fileContent = (treeName: String) =>
+          (blobName: String) =>
+            FilesIO.getContent(s"${projectDir}${treeName}${blobName}")
+        val blobContent = (blobHash: String) =>
+          FilesIO.getContent(s"${blobsPath}${blobHash}")
+        val diff =
+          stage.getModified(
+            blobExists,
+            blobContent,
+            fileContent
+          )
         if (diff.isEmpty) "-- Nothing modified --"
         else diff.mkString
       }
@@ -88,9 +114,17 @@ case class Repo(repoDir: String) {
   }
 
   def add(files: Array[String]): String = {
+    //TODO DELETE ME
+    val allFiles = (f: File) => FilesIO.getAllFiles(f)
+    val fileContent = (dirName: String) =>
+      (fileName: String) =>
+        FilesIO.getContent(s"${projectDir}${dirName}$fileName")
+
     val volatileTree: Tree = Tree.createFromList(
       files.filterNot(_.contains(".sgit")),
-      projectDir
+      projectDir,
+      allFiles,
+      fileContent
     )
 
     // If no stage -> volatile tree = stage (means no commit had been done)
@@ -141,7 +175,17 @@ case class Repo(repoDir: String) {
     //Check if there is something to commit then check message and commit
     (getStage(), getLastCommit()) match {
       case (Some(stage), Some(commit)) => {
-        val tree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
+        //TODO DELETE ME
+        val blobContent = (blobHash: String) =>
+          FilesIO.getContent(s"${blobsPath}$blobHash")
+        val treeContent = (treeHash: String) =>
+          FilesIO.loadXml(s"${treesPath}$treeHash")
+        val tree =
+          Tree.getTree(
+            commit.treeHash,
+            blobContent,
+            treeContent
+          )
         if (Diff.fromTrees(stage, tree).isEmpty)
           "Sorry, nothing is to be commited. Use sgit add before commiting"
         else checkMessageAndCommitTree(stage, commit.hash)
@@ -153,21 +197,33 @@ case class Repo(repoDir: String) {
   }
 
   def getStage(): Option[Tree] = {
+    //TODO DELETE ME
+    val blobContent = (blobHash: String) =>
+      FilesIO.getContent(s"${blobsPath}$blobHash")
+    val treeContent = (treeHash: String) =>
+      FilesIO.loadXml(s"${treesPath}$treeHash")
+
     val stageHashOption = FilesIO.getHash(s"${repoDir}${File.separator}STAGE")
     stageHashOption.map(
       stageHash =>
         Tree.getTree(
-          treesPath,
-          blobsPath,
-          stageHash
+          stageHash,
+          blobContent,
+          treeContent
         )
     )
   };
 
   def setStage(newStage: Tree) = {
+    //TODO
+    val writeBlobToRepo = (content: String, hash: String) =>
+      FilesIO.write(s"${blobsPath}${hash}", content)
+    //TODO
+    val saveTreeAsXml = (xml: Node, hash: String) =>
+      FilesIO.saveXml(xml, s"${treesPath}${hash}")
     newStage.save(
-      treesPath,
-      blobsPath
+      saveTreeAsXml,
+      writeBlobToRepo
     )
     FilesIO.write(s"${repoDir}${File.separator}STAGE", newStage.hash)
   }
@@ -207,11 +263,26 @@ case class Repo(repoDir: String) {
   }
 
   def diff(): String = {
+    // TODO DELETE ME
+    val blobExists = (treeName: String) =>
+      (blobName: String) =>
+        FilesIO.fileExists(s"${projectDir}${treeName}${blobName}")
+    def vlov(treename: String)(blobName: String) = FilesIO.fileExists(treesPath)
+    val fileContent = (treeName: String) =>
+      (blobName: String) =>
+        FilesIO.getContent(s"${projectDir}${treeName}${blobName}")
+    val blobContent = (blobHash: String) =>
+      FilesIO.getContent(s"${blobsPath}${blobHash}")
+
     getStage() match {
       case None => "No diff"
       case Some(stage) =>
         val modified = stage
-          .getModified(projectDir, blobsPath)
+          .getModified(
+            blobExists,
+            blobContent,
+            fileContent
+          )
 
         if (modified.isEmpty) "No diff"
         else modified.map(_.getDetails).mkString("\n")
@@ -244,13 +315,32 @@ case class Repo(repoDir: String) {
   }
 
   def checkout(to: String): String = {
+    // TODO Delete me
+    val blobExists = (treeName: String) =>
+      (blobName: String) =>
+        FilesIO.fileExists(s"${projectDir}${treeName}${blobName}")
+    val fileContent = (treeName: String) =>
+      (blobName: String) =>
+        FilesIO.getContent(s"${projectDir}${treeName}${blobName}")
+    val blobContent = (blobHash: String) =>
+      FilesIO.getContent(s"${blobsPath}${blobHash}")
+    val treeContent = (treeHash: String) =>
+      FilesIO.loadXml(s"${treesPath}$treeHash")
     //First checking if there's anything modified
     getStage() match {
       case Some(stage) => {
         val lastCommitTree =
-          Tree.getTree(treesPath, blobsPath, getLastCommit().get.treeHash)
+          Tree.getTree(
+            getLastCommit().get.treeHash,
+            blobContent,
+            treeContent
+          )
         if (stage
-              .getModified(projectDir, blobsPath)
+              .getModified(
+                blobExists,
+                blobContent,
+                fileContent
+              )
               .isEmpty && Diff.fromTrees(lastCommitTree, stage).isEmpty) {
           //Only then we checkout
           val toCommitOption = Commit.getCommitOption(to, commitsPath)
@@ -304,8 +394,19 @@ case class Repo(repoDir: String) {
   }
 
   def checkout(actualStage: Tree, commit: Commit, head: String): String = {
+    //TODO DELETE ME
+    val blobContent = (blobHash: String) =>
+      FilesIO.getContent(s"${blobsPath}$blobHash")
+    val treeContent = (treeHash: String) =>
+      FilesIO.loadXml(s"${treesPath}$treeHash")
+
     //Need to check if all actual untracked file are contained in destination commit. If so fatal message
-    val destinationTree = Tree.getTree(treesPath, blobsPath, commit.treeHash)
+    val destinationTree =
+      Tree.getTree(
+        commit.treeHash,
+        blobContent,
+        treeContent
+      )
     val destinationFiles =
       destinationTree.getAllFiles()
     val untracked = getUntracked()
@@ -315,7 +416,10 @@ case class Repo(repoDir: String) {
         .mkString("\n")}\nPlease move or remove them before you switch branches. ${Console.RED}${Console.BOLD}Aborting${Console.RESET}"
     else {
       FilesIO.deleteFiles(actualStage.getAllFiles())
-      destinationTree.createAllFiles(projectDir)
+      //TODO DELETE ME
+      def writeBlobToRepo(nameTree: String)(nameBlob: String, content: String) =
+        FilesIO.write(s"${projectDir}${nameTree}$nameBlob", content)
+      destinationTree.createAllFiles(writeBlobToRepo)
       setStage(destinationTree)
       head match {
         case "detached" => {

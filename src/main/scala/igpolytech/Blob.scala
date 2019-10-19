@@ -14,9 +14,7 @@ case class Blob(name: String, getContent: () => String) {
   //TODO old FilesIO.write(s"${dirPath}$name", content)
 
   def getDiffWithNew(
-      projectDir: String,
       treeName: String,
-      blobPath: String,
       blobExists: (String) => Boolean,
       blobContent: (String) => String,
       fileContent: (String) => String

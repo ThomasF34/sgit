@@ -46,13 +46,21 @@ class TreeTest extends FunSpec with Matchers {
 
     it("should create tree from string array") {
       FilesIO.createDirectories(Array("testDir"))
-      val fakeProjectDir = new File(".").getCanonicalPath()
+      val fakeProjectDir =
+        s"${new File(".").getCanonicalPath()}${File.separator}"
       FilesIO.write(s"testDir${File.separator}test", "abc")
+      //TODO DELETE ME
+      val allFiles = (f: File) => FilesIO.getAllFiles(f)
+      val fileContent = (dirName: String) =>
+        (fileName: String) =>
+          FilesIO.getContent(s"${fakeProjectDir}${dirName}$fileName")
 
       val createdTree =
         Tree.createFromList(
           Array("testDir"),
-          s"${fakeProjectDir}${File.separator}"
+          fakeProjectDir,
+          allFiles,
+          fileContent
         )
 
       assert(

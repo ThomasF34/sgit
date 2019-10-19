@@ -2,6 +2,7 @@ package igpolytech
 
 import java.io.File
 import org.scalatest._
+import scala.xml.Node
 
 class RepoTest extends FunSpec with Matchers {
   override def withFixture(test: NoArgTest) = {
@@ -59,9 +60,13 @@ class RepoTest extends FunSpec with Matchers {
       Repo.init(".")
       val repo = Repo(".sgit")
       val tree = Tree("A113")
+      val writeBlobToRepo = (content: String, hash: String) =>
+        FilesIO.write(s"${repo.blobsPath}${hash}", content)
+      val saveTreeAsXml = (xml: Node, hash: String) =>
+        FilesIO.saveXml(xml, s"${repo.treesPath}${hash}")
       tree.save(
-        repo.treesPath,
-        repo.blobsPath
+        saveTreeAsXml,
+        writeBlobToRepo
       )
       FilesIO.write(s".sgit${File.separator}STAGE", tree.hash)
 
@@ -84,6 +89,11 @@ class RepoTest extends FunSpec with Matchers {
       Repo.init(".")
       val repo = Repo(".sgit")
       val tree = Tree("A113")
+      //TODO DELETE ME
+      val blobContent =
+        (blobHash: String) => FilesIO.getContent(s"${repo.blobsPath}$blobHash")
+      val treeContent =
+        (treeHash: String) => FilesIO.loadXml(s"${repo.treesPath}$treeHash")
 
       repo.setStage(tree)
 
@@ -92,7 +102,13 @@ class RepoTest extends FunSpec with Matchers {
       assert(hash.isDefined)
       assert(hash.get.equals(tree.hash))
       assert(
-        Tree.getTree(repo.treesPath, repo.blobsPath, hash.get).equals(tree)
+        Tree
+          .getTree(
+            hash.get,
+            blobContent,
+            treeContent
+          )
+          .equals(tree)
       )
     }
   }

@@ -73,11 +73,20 @@ case class Commit(
       commitsDir: String
   ): Array[Diff] = {
     if (parentHash != "") {
-      val tree = Tree.getTree(pathTreeDir, pathBlobDir, treeHash)
+      //TODO DELETE ME
+      val blobContent = (blobHash: String) =>
+        FilesIO.getContent(s"${pathBlobDir}$blobHash")
+      val treeContent = (treeHash: String) =>
+        FilesIO.loadXml(s"${pathTreeDir}$treeHash")
+      val tree = Tree.getTree(
+        treeHash,
+        blobContent,
+        treeContent
+      )
       val parentTree = Tree.getTree(
-        pathTreeDir,
-        pathBlobDir,
-        Commit.getCommit(parentHash, commitsDir).treeHash
+        Commit.getCommit(parentHash, commitsDir).treeHash,
+        blobContent,
+        treeContent
       )
       Diff.fromTrees(parentTree, tree)
     } else {
