@@ -23,8 +23,9 @@ case class IOManager() {
       .isDirectory()
 
   def fileExists(dir: String)(path: String): Boolean =
-    new File(s"${dir}$path")
-      .isFile()
+    fileExists(new File(s"${dir}$path"))
+
+  def fileExists(file: File): Boolean = file.isFile()
 
   def emptyFile(filePath: String): Boolean = {
     val file = new File(filePath)
@@ -94,13 +95,15 @@ case class IOManager() {
   }
 
   def getAllFiles(dir: File): Array[File] = {
-    if (dir.isFile()) Array(dir)
+    if (!dir.exists) Array()
+    else if (dir.isFile()) Array(dir)
     else
       dir
         .listFiles()
         .filter(_.getName() != ".sgit")
         .flatMap(getAllFiles(_))
   }
+
   // OUTPUTS
 
   def createDirectories(dirs: Array[String]) = {

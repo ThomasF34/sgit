@@ -138,10 +138,12 @@ object Tree {
       files: Array[String],
       projectDir: String,
       allFiles: (File) => Array[File],
-      fileContent: (String) => (String) => String
+      fileContent: (String) => (String) => String,
+      fileExists: (File) => Boolean
   ): Tree = {
     val explicitedFiles: Array[Array[String]] = files
       .flatMap(f => allFiles(new File(f)))
+      .filter(file => fileExists(file))
       .map(file => {
         file
           .getCanonicalPath()

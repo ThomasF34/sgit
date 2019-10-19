@@ -145,7 +145,8 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
       files.filterNot(_.contains(".sgit")),
       projectDir,
       allFiles,
-      fileContent
+      fileContent,
+      ioManager.fileExists
     )
 
     // If no stage -> volatile tree = stage (means no commit had been done)

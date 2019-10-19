@@ -11,7 +11,7 @@ case class Diff(changes: Array[Change], filePath: String) {
   }
 
   def getDetails(): String = {
-    s"diff on $filePath:\n${changes.mkString("\n")}\n"
+    s"diff on $filePath:\n${changes.sortBy(_.lineNumber).mkString("\n")}\n"
   }
 
   def getStats(): String = {
