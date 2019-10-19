@@ -8,7 +8,12 @@ case class Repo(repoDir: String) {
   val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
   val branchesPath = s"${repoDir}${File.separator}branches${File.separator}"
   val tagsPath = s"${repoDir}${File.separator}tags${File.separator}"
-  val headPath = s"${repoDir}${File.separator}HEAD"
+
+  val headDir = s"${repoDir}${File.separator}"
+  val headFile = "HEAD"
+
+  val stageDir = s"${repoDir}${File.separator}"
+  val stageFile = "STAGE"
 
   val commitContent = (hash: String) =>
     FilesIO.loadXml(s"${commitsPath}${hash}")
@@ -16,12 +21,14 @@ case class Repo(repoDir: String) {
     FilesIO.getContent(s"${branchesPath}$name")
   val blobContent = (blobHash: String) =>
     FilesIO.getContent(s"${blobsPath}$blobHash")
-  val treeContent = (treeHash: String) =>
-    FilesIO.loadXml(s"${treesPath}$treeHash")
   val tagContent = (name: String) => FilesIO.getContent(s"${tagsPath}$name")
   val fileContent = (dirName: String) =>
     (fileName: String) =>
       FilesIO.getContent(s"${projectDir}${dirName}$fileName")
+
+  val treeContent = (treeHash: String) =>
+    FilesIO.loadXml(s"${treesPath}$treeHash")
+  val headContent = () => FilesIO.loadXml(s"${headDir}$headFile")
 
   val blobExists = (treeName: String) =>
     (blobName: String) =>
@@ -32,23 +39,29 @@ case class Repo(repoDir: String) {
   val branchExists = (name: String) =>
     FilesIO.fileExists(s"${branchesPath}$name")
 
-  val saveCommitToRepo = (hash: String, xml: Node) =>
-    FilesIO.saveXml(xml, s"${commitsPath}${hash}")
-  val saveTreeAsXml = (xml: Node, hash: String) =>
-    FilesIO.saveXml(xml, s"${treesPath}${hash}")
-  val saveHeadToRepo = (xml: Node) => FilesIO.saveXml(xml, headPath)
-  val saveBranchToRepo = (name: String, content: String) =>
-    FilesIO.write(s"${branchesPath}$name", content)
-  val saveTagToRepo = (name: String, hash: String) =>
-    FilesIO.write(s"${tagsPath}$name", hash)
-  val writeBlobToRepo = (hash: String, content: String) =>
-    FilesIO.write(s"${blobsPath}${hash}", content)
-  def writeBlobToRepoDecomposed(
-      nameTree: String
-  )(nameBlob: String, content: String) =
-    FilesIO.write(s"${projectDir}${nameTree}$nameBlob", content)
-  // TODO delete me
-  val headContent = () => FilesIO.loadXml(headPath)
+  def saveCommitToRepo = FilesIO.saveXml(commitsPath)(_, _)
+  def saveTreeToRepo = FilesIO.saveXml(treesPath)(_, _)
+  def saveHeadToRepo = FilesIO.saveXml(headDir)(_, headFile)
+  // (hash: String, xml: Node) =>
+  //   FilesIO.saveXml(xml, s"${commitsPath}${hash}")
+  // val saveTreeAsXml = (xml: Node, hash: String) =>
+  //   FilesIO.saveXml(xml, s"${treesPath}${hash}")
+  // val saveHeadToRepo = (xml: Node) =>
+  //   FilesIO.saveXml(xml, s"${headDir}$headFile")
+
+  def saveBranchToRepo = FilesIO.write(branchesPath)(_, _)
+  def saveTagToRepo = FilesIO.write(tagsPath)(_, _)
+  def saveBlobToRepo = FilesIO.write(blobsPath)(_, _)
+  // val saveBranchToRepo = (name: String, content: String) =>
+  //   FilesIO.write(s"${branchesPath}$name", content)
+  // val saveTagToRepo = (name: String, hash: String) =>
+  //   FilesIO.write(s"${tagsPath}$name", hash)
+  // val writeBlobToRepo = (hash: String, content: String) =>
+  //   FilesIO.write(s"${blobsPath}${hash}", content)
+  def writeBlobFromFile(
+      tree: String
+  )(blob: String, content: String) =
+    FilesIO.write(s"${projectDir}${tree}")(blob, content)
 
   def head: Head = Head.fromHeadFile(headContent)
   val projectDir = repoDir match {
@@ -228,10 +241,10 @@ case class Repo(repoDir: String) {
 
   def setStage(newStage: Tree) = {
     newStage.save(
-      saveTreeAsXml,
-      writeBlobToRepo
+      saveTreeToRepo,
+      saveBlobToRepo
     )
-    FilesIO.write(s"${repoDir}${File.separator}STAGE", newStage.hash)
+    FilesIO.write(stageDir)(stageFile, newStage.hash)
   }
 
   def allFiles: Array[String] =
@@ -264,8 +277,14 @@ case class Repo(repoDir: String) {
     if (Tag.exists(tagName, tagExists))
       "Sorry tag name is already used"
     else {
-      Tag(tagName, FilesIO.getContent(headPath)).save(saveTagToRepo)
-      s"Tag $tagName created"
+      head.getLastCommit(commitContent, branchContent) match {
+        case None =>
+          s"The head your repository does not point towards a commit. Please commit before creating a tag"
+        case Some(commit) => {
+          Tag(tagName, commit.hash).save(saveTagToRepo)
+          s"Tag $tagName created"
+        }
+      }
     }
   }
 
@@ -403,8 +422,7 @@ case class Repo(repoDir: String) {
         .mkString("\n")}\nPlease move or remove them before you switch branches. ${Console.RED}${Console.BOLD}Aborting${Console.RESET}"
     else {
       FilesIO.deleteFiles(actualStage.getAllFiles())
-      //TODO DELETE ME
-      destinationTree.createAllFiles(writeBlobToRepoDecomposed)
+      destinationTree.createAllFiles(writeBlobFromFile)
       setStage(destinationTree)
       head match {
         case "detached" => {
@@ -458,13 +476,13 @@ object Repo {
       try {
         FilesIO.createDirectories(dirs);
         FilesIO.createFiles(files);
-        FilesIO.write(s"${sgitDir}branches${File.separator}master", "")
+        FilesIO.write(s"${sgitDir}branches${File.separator}")("master", "")
 
         //TODO DELETE ME
         val initialBranchExists = (branchName: String) =>
           FilesIO.fileExists(s"${sgitDir}branches${File.separator}$branchName")
         val initialSaveHeadToRepo = (xml: Node) =>
-          FilesIO.saveXml(xml, s"${sgitDir}HEAD")
+          FilesIO.saveXml(sgitDir)(xml, "HEAD")
         Head
           .fromBranchName(
             "master",

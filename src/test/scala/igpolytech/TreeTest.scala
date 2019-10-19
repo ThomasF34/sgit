@@ -46,7 +46,7 @@ class TreeTest extends FunSpec with Matchers {
       FilesIO.createDirectories(Array("testDir"))
       val fakeProjectDir =
         s"${new File(".").getCanonicalPath()}${File.separator}"
-      FilesIO.write(s"testDir${File.separator}test", "abc")
+      FilesIO.write(s"testDir${File.separator}")("test", "abc")
       //TODO DELETE ME
       val allFiles = (f: File) => FilesIO.getAllFiles(f)
       val fileContent = (dirName: String) =>

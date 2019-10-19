@@ -61,14 +61,14 @@ class RepoTest extends FunSpec with Matchers {
       val repo = Repo(".sgit")
       val tree = Tree("A113")
       val writeBlobToRepo = (content: String, hash: String) =>
-        FilesIO.write(s"${repo.blobsPath}${hash}", content)
-      val saveTreeAsXml = (xml: Node, hash: String) =>
-        FilesIO.saveXml(xml, s"${repo.treesPath}${hash}")
+        FilesIO.write(repo.blobsPath)(hash, content)
+      val saveTreeAsXml =
+        (xml: Node, hash: String) => FilesIO.saveXml(repo.treesPath)(xml, hash)
       tree.save(
         saveTreeAsXml,
         writeBlobToRepo
       )
-      FilesIO.write(s".sgit${File.separator}STAGE", tree.hash)
+      FilesIO.write(repo.stageDir)(repo.stageFile, tree.hash)
 
       val stageTree = repo.getStage
 

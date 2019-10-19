@@ -116,8 +116,8 @@ object FilesIO {
     * Write the content in the given file.
     * File will be created if does not exist
     */
-  def write(path: String, content: String) = {
-    val file = new File(path)
+  def write(dir: String)(filename: String, content: String) = {
+    val file = new File(s"${dir}$filename")
     if (!file.exists()) {
       file.createNewFile()
     }
@@ -127,8 +127,8 @@ object FilesIO {
     writer.close()
   }
 
-  def saveXml(content: Node, path: String) = {
-    scala.xml.XML.save(path, content);
+  def saveXml(dir: String)(content: Node, file: String) = {
+    scala.xml.XML.save(s"${dir}$file", content);
   }
 
   // END

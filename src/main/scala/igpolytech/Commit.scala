@@ -34,9 +34,9 @@ case class Commit(
   }
 
   def save(
-      saveCommitToRepo: (String, Node) => Unit
+      saveCommitToRepo: (Node, String) => Unit
   ): Unit = {
-    saveCommitToRepo(hash, toXml())
+    saveCommitToRepo(toXml(), hash)
   }
 
   def getDetails(

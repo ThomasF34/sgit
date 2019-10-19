@@ -45,7 +45,7 @@ class CommitTest extends FunSpec with Matchers {
       val blob = new Blob("A113", getFakeContent)
       val tree = new Tree("", Array(), Array(blob))
       repo.setStage(tree)
-      FilesIO.write(".sgit/CommitMessage", "John Lasseter is great")
+      FilesIO.write(".sgit/")("CommitMessage", "John Lasseter is great")
       //TODO DELETE ME
       val branchContent =
         (name: String) => FilesIO.getContent(s"${repo.branchesPath}$name")
