@@ -89,11 +89,6 @@ class RepoTest extends FunSpec with Matchers {
       Repo.init(".")
       val repo = Repo(".sgit")
       val tree = Tree("A113")
-      //TODO DELETE ME
-      val blobContent =
-        (blobHash: String) => FilesIO.getContent(s"${repo.blobsPath}$blobHash")
-      val treeContent =
-        (treeHash: String) => FilesIO.loadXml(s"${repo.treesPath}$treeHash")
 
       repo.setStage(tree)
 
@@ -105,8 +100,8 @@ class RepoTest extends FunSpec with Matchers {
         Tree
           .getTree(
             hash.get,
-            blobContent,
-            treeContent
+            repo.blobContent,
+            repo.treeContent
           )
           .equals(tree)
       )

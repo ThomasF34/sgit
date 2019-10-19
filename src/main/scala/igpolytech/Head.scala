@@ -73,11 +73,7 @@ object Head {
     } else None
 
   def fromHeadFile(
-      headContent: () => Node
-  ): Head = {
-    val xml = headContent()
-    val mode = (xml \@ "mode")
-    val content = (xml).text
-    Head(mode, content)
-  }
+      xml: Node
+  ): Head =
+    Head((xml \@ "mode"), (xml).text)
 }

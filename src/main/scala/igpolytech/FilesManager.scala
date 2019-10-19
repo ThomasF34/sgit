@@ -44,8 +44,8 @@ object FilesIO {
     }
   }
 
-  def loadXml(path: String): Node = {
-    scala.xml.XML.loadFile(path)
+  def loadXml(dir: String)(file: String): Node = {
+    scala.xml.XML.loadFile(s"${dir}$file")
   }
 
   def getContent(path: String): String = {

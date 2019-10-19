@@ -22,8 +22,6 @@ case class Repo(repoDir: String) {
     case s"${value}.sgit" => value
   }
 
-  val commitContent = (hash: String) =>
-    FilesIO.loadXml(s"${commitsPath}${hash}")
   val branchContent = (name: String) =>
     FilesIO.getContent(s"${branchesPath}$name")
   val blobContent = (blobHash: String) =>
@@ -33,9 +31,14 @@ case class Repo(repoDir: String) {
     (fileName: String) =>
       FilesIO.getContent(s"${projectDir}${dirName}$fileName")
 
-  val treeContent = (treeHash: String) =>
-    FilesIO.loadXml(s"${treesPath}$treeHash")
-  val headContent = () => FilesIO.loadXml(s"${headDir}$headFile")
+  lazy val commitContent = FilesIO.loadXml(commitsPath)(_)
+  lazy val treeContent = FilesIO.loadXml(treesPath)(_)
+  lazy val headContent = FilesIO.loadXml(headDir)(headFile)
+  // val commitContent = (hash: String) =>
+  //   FilesIO.loadXml(s"${commitsPath}${hash}")
+  // val treeContent = (treeHash: String) =>
+  //   FilesIO.loadXml(s"${treesPath}$treeHash")
+  // val headContent = () => FilesIO.loadXml(s"${headDir}$headFile")
 
   def tagExists = FilesIO.fileExists(tagsPath)(_: String)
   def commitExists = FilesIO.fileExists(commitsPath)(_: String)
