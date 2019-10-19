@@ -127,7 +127,13 @@ object Parser extends App {
         ),
       cmd("rebase")
         .action((_, c) => c.copy(mode = "rebase"))
-        .text("Not yet impletemented")
+        .text("Not yet impletemented"),
+      checkConfig(
+        c =>
+          if (c.mode == "")
+            failure("There were no command given ! Please see usage.")
+          else success
+      )
     )
   }
 
