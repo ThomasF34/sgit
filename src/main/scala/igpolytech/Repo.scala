@@ -28,57 +28,23 @@ case class Repo(repoDir: String) {
   lazy val fileContent = (dirName: String) =>
     (fileName: String) => FilesIO.getContent(s"${projectDir}$dirName")(fileName)
 
-  // val branchContent = (name: String) =>
-  //   FilesIO.getContent(s"${branchesPath}$name")
-  // val blobContent = (blobHash: String) =>
-  //   FilesIO.getContent(s"${blobsPath}$blobHash")
-  // val tagContent = (name: String) => FilesIO.getContent(s"${tagsPath}$name")
-  // val fileContent = (dirName: String) =>
-  //   (fileName: String) =>
-  //     FilesIO.getContent(s"${projectDir}${dirName}$fileName")
-
   lazy val commitContent = FilesIO.loadXml(commitsPath)(_)
   lazy val treeContent = FilesIO.loadXml(treesPath)(_)
   lazy val headContent = FilesIO.loadXml(headDir)(headFile)
-  // val commitContent = (hash: String) =>
-  //   FilesIO.loadXml(s"${commitsPath}${hash}")
-  // val treeContent = (treeHash: String) =>
-  //   FilesIO.loadXml(s"${treesPath}$treeHash")
-  // val headContent = () => FilesIO.loadXml(s"${headDir}$headFile")
 
   def tagExists = FilesIO.fileExists(tagsPath)(_)
   def commitExists = FilesIO.fileExists(commitsPath)(_)
   def branchExists = FilesIO.fileExists(branchesPath)(_)
   def blobExists(treeName: String)(blobName: String) =
     FilesIO.fileExists(projectDir)(s"${treeName}$blobName")
-  // val blobExists = (treeName: String) =>
-  //   (blobName: String) =>
-  //     FilesIO.fileExists(s"${projectDir}${treeName}${blobName}")
-  // val tagExists = (name: String) => FilesIO.fileExists(s"${tagsPath}$name")
-  // val commitExists = (hash: String) =>
-  //   FilesIO.fileExists(s"${commitsPath}$hash")
-  // val branchExists = (name: String) =>
-  //   FilesIO.fileExists(s"${branchesPath}$name")
 
   def saveCommitToRepo = FilesIO.saveXml(commitsPath)(_, _)
   def saveTreeToRepo = FilesIO.saveXml(treesPath)(_, _)
   def saveHeadToRepo = FilesIO.saveXml(headDir)(_, headFile)
-  // (hash: String, xml: Node) =>
-  //   FilesIO.saveXml(xml, s"${commitsPath}${hash}")
-  // val saveTreeAsXml = (xml: Node, hash: String) =>
-  //   FilesIO.saveXml(xml, s"${treesPath}${hash}")
-  // val saveHeadToRepo = (xml: Node) =>
-  //   FilesIO.saveXml(xml, s"${headDir}$headFile")
 
   def saveBranchToRepo = FilesIO.write(branchesPath)(_, _)
   def saveTagToRepo = FilesIO.write(tagsPath)(_, _)
   def saveBlobToRepo = FilesIO.write(blobsPath)(_, _)
-  // val saveBranchToRepo = (name: String, content: String) =>
-  //   FilesIO.write(s"${branchesPath}$name", content)
-  // val saveTagToRepo = (name: String, hash: String) =>
-  //   FilesIO.write(s"${tagsPath}$name", hash)
-  // val writeBlobToRepo = (hash: String, content: String) =>
-  //   FilesIO.write(s"${blobsPath}${hash}", content)
   def writeBlobFromFile(
       tree: String
   )(blob: String, content: String) =
@@ -391,24 +357,7 @@ case class Repo(repoDir: String) {
                 .flatMap(_.getCommit(commitContent, commitExists))
                 .map(tagCommit => (tagCommit, "detached"))
             )
-          // val commitWithHeadMode = toCommitOption match {
-          //   case Some(commit) => Some((commit, "detached"))
-          //   case None => {
-          //     Branch
-          //       .getBranchOption(to, branchesPath)
-          //       .flatMap(_.getLastCommit(commitsPath)) match {
-          //       case Some(branchCommit) => {
-          //         Some((branchCommit, to))
-          //       }
-          //       case None => {
-          //         Tag
-          //           .fromName(to, tagsPath)
-          //           .flatMap(_.getCommit(commitsPath))
-          //           .map(tagCommit => (tagCommit, "detached"))
-          //       }
-          //     }
-          //   }
-          // }
+
           commitWithHeadMode match {
             case Some((commit, headMode)) => {
               checkout(stage, commit, headMode)
@@ -497,7 +446,6 @@ object Repo {
         FilesIO.createFiles(files);
         FilesIO.write(s"${sgitDir}branches${File.separator}")("master", "")
 
-        //TODO DELETE ME
         val initialBranchExists =
           FilesIO.fileExists(s"${sgitDir}branches${File.separator}")(_: String)
         val initialSaveHeadToRepo = (xml: Node) =>

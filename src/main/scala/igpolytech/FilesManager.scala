@@ -26,6 +26,20 @@ object FilesIO {
     new File(s"${dir}$path")
       .isFile()
 
+  def emptyFile(filePath: String): Boolean = {
+    val file = new File(filePath)
+    val reader: BufferedReader = new BufferedReader(new FileReader(file))
+    reader.readLine() == null
+  }
+
+  def getHash(filePath: String): Option[String] = {
+    val file = new File(filePath)
+    val reader: BufferedReader = new BufferedReader(new FileReader(file))
+    val line = reader.readLine()
+    if (line == null) None
+    else Some(line)
+  }
+
   /**
     * Searchs recursively for the repo dir until reaching the root dir
     * Returns the path of the repo dir or $none if not found
@@ -133,18 +147,4 @@ object FilesIO {
 
   // END
 
-  //TODO SEE IF USABLE
-  def emptyFile(filePath: String): Boolean = {
-    val file = new File(filePath)
-    val reader: BufferedReader = new BufferedReader(new FileReader(file))
-    reader.readLine() == null
-  }
-
-  def getHash(filePath: String): Option[String] = {
-    val file = new File(filePath)
-    val reader: BufferedReader = new BufferedReader(new FileReader(file))
-    val line = reader.readLine()
-    if (line == null) None
-    else Some(line)
-  }
 }
