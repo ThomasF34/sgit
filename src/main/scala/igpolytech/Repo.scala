@@ -242,7 +242,7 @@ case class Repo(repoDir: String) {
 
   def setStage(newStage: Tree) = {
     //TODO
-    val writeBlobToRepo = (content: String, hash: String) =>
+    val writeBlobToRepo = (hash: String, content: String) =>
       FilesIO.write(s"${blobsPath}${hash}", content)
     //TODO
     val saveTreeAsXml = (xml: Node, hash: String) =>
