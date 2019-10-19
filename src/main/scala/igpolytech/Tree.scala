@@ -86,7 +86,7 @@ case class Tree(
   }
 
   override def toString(): String =
-    s"${name}${trees.map(_.name).mkString}${blobs.mkString}"
+    s"${name}${trees.map(_.hash).mkString}${blobs.mkString}"
 
   def equals(tree: Tree): Boolean = this.hash.equals(tree.hash)
 

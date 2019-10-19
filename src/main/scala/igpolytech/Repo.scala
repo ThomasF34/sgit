@@ -203,7 +203,7 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
             blobContent,
             treeContent
           )
-        if (Diff.fromTrees(stage, tree).isEmpty)
+        if (Diff.fromTrees(tree, stage).isEmpty)
           "Sorry, nothing is to be commited. Use sgit add before commiting"
         else checkMessageAndCommitTree(stage, commit.hash)
       }
