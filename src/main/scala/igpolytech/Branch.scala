@@ -5,9 +5,6 @@ case class Branch(name: String, commitHash: String) {
   def getLastCommit(
       commitContent: (String) => Node
   ): Option[Commit] = {
-    //TODO DELETE ME
-    // val commitContent = (hash: String) =>
-    //   FilesIO.loadXml(s"${commitsPath}${hash}")
     if (commitHash != "") Some(Commit.getCommit(commitHash, commitContent))
     else None
   }
@@ -16,7 +13,6 @@ case class Branch(name: String, commitHash: String) {
 
   def save(saveBranchToRepo: (String, String) => Unit) =
     saveBranchToRepo(name, commitHash)
-  // TODO old FilesIO.write(s"${branchesPath}$name", commitHash)
 }
 
 object Branch {
@@ -32,10 +28,8 @@ object Branch {
       name: String,
       branchContent: (String) => String
   ): Branch =
-    // Branch(name, FilesIO.getContent(s"${branchesPath}$name"))
     Branch(name, branchContent(name))
 
   def exists(name: String, branchExists: (String) => Boolean): Boolean =
     branchExists(name)
-  // TODO old FilesIO.fileExists(s"${branchesPath}$name")
 }

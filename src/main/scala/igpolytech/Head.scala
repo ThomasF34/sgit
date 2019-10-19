@@ -9,7 +9,6 @@ import scala.xml.Node
 case class Head(mode: String, content: String) {
   def save(saveHeadToRepo: (Node) => Unit) =
     saveHeadToRepo(toXml())
-  // TODO OLD FilesIO.saveXml(this.toXml(), headPath)
 
   /**
     * This function will return a new Head.
@@ -40,10 +39,6 @@ case class Head(mode: String, content: String) {
       commitContent: (String) => Node,
       branchContent: (String) => String
   ): Option[Commit] = {
-    //TODO DELETE ME
-    // val commitContent = (hash: String) =>
-    //   FilesIO.loadXml(s"${commitsPath}${hash}")
-
     mode match {
       case "branch" =>
         Branch
@@ -65,7 +60,6 @@ object Head {
       branchExists: (String) => Boolean
   ): Boolean =
     branchExists(branchName)
-  //TODO old FilesIO.fileExists(s"${branchesPath}$branchName")
 
   def fromCommitHash(commitHash: String): Head =
     Head("detached", commitHash)
@@ -73,17 +67,14 @@ object Head {
   def fromBranchName(
       branchName: String,
       branchExists: (String) => Boolean
-  ): Option[Head] = {
+  ): Option[Head] =
     if (exists(branchName, branchExists)) {
       Some(Head("branch", branchName))
     } else None
-  }
 
   def fromHeadFile(
       headContent: () => Node
   ): Head = {
-    // TODO old
-    // val xml = FilesIO.loadXml(headPath)
     val xml = headContent()
     val mode = (xml \@ "mode")
     val content = (xml).text

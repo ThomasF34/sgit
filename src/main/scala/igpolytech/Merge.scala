@@ -9,12 +9,6 @@ object Merge {
       commitContent: (String) => Node,
       commitExists: (String) => Boolean
   ) = {
-    //TODO DELETE ME
-    // val commitContent = (hash: String) =>
-    //   FilesIO.loadXml(s"${commitsPath}${hash}")
-    // val commitExists = (hash: String) =>
-    //   FilesIO.fileExists(s"${commitsPath}$hash")
-
     val ancestorCommit =
       Commit.getAncestorCommit(
         firstCommit,

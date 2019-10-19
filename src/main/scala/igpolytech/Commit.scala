@@ -37,7 +37,6 @@ case class Commit(
       saveCommitToRepo: (String, Node) => Unit
   ): Unit = {
     saveCommitToRepo(hash, toXml())
-    // TODO OLD FilesIO.saveXml(this.toXml(), s"${commitsDirPath}${hash}")
   }
 
   def getDetails(
@@ -77,11 +76,6 @@ case class Commit(
       commitContent: (String) => Node
   ): Array[Diff] = {
     if (parentHash != "") {
-      //TODO
-      // val blobContent = (blobHash: String) =>
-      //   FilesIO.getContent(s"${pathBlobDir}$blobHash")
-      // val treeContent = (treeHash: String) =>
-      //   FilesIO.loadXml(s"${pathTreeDir}$treeHash")
       val tree = Tree.getTree(
         treeHash,
         blobContent,
@@ -176,7 +170,6 @@ object Commit {
       commitContent: (String) => Node
   ): Commit = {
     val xmlContent = commitContent(hash)
-    //TODO OLD FilesIO.loadXml(s"${commitsDirPath}${hash}")
     val text = (xmlContent \ "text").text
     val parentHash = (xmlContent \ "parent").text
     val author = (xmlContent \ "author").text
@@ -190,7 +183,6 @@ object Commit {
       commitExists: (String) => Boolean
   ): Boolean =
     commitExists(hash)
-  //TODO OLD  FilesIO.fileExists(s"${commitsDirPath}$hash")
 
   def getAncestorCommit(
       firstCommit: Commit,

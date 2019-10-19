@@ -127,7 +127,7 @@ object Parser extends App {
         ),
       cmd("rebase")
         .action((_, c) => c.copy(mode = "rebase"))
-        .text("TODO")
+        .text("Not yet impletemented")
     )
   }
 

@@ -27,12 +27,8 @@ case class Tree(
       writeBlobToRepo: (String, String) => Unit
   ): Unit = {
     trees.foreach(_.save(saveTreeAsXml, writeBlobToRepo))
-    // //TODO delete me
-    // val writeBlobToRepo = (content: String, hash: String) =>
-    //   FilesIO.write(s"${blobsPath}${hash}", content)
     blobs.foreach(_.save(writeBlobToRepo))
     saveTreeAsXml(this.toXml(), hash)
-    //TODO old FilesIO.saveXml(this.toXml(), s"${treesPath}${hash}")
   }
 
   def toXml(): Node = {
@@ -76,13 +72,6 @@ case class Tree(
       blobContent: (String) => String,
       fileContent: (String) => (String) => String
   ): Array[Diff] = {
-    //TODO delete me
-    // TODO old val blobExists = (blobName: String) => FilesIO.fileExists(s"${projectDir}${name}${blobName}")
-    // val blobContent = (blobHash: String) =>
-    //   FilesIO.getContent(s"${blobsPath}${blobHash}")
-    // TODO Delete me
-    // val fileContent = (blobName: String) =>
-    //   FilesIO.getContent(s"${projectDir}${this.name}${blobName}")
     blobs
       .flatMap(
         _.getDiffWithNew(
@@ -105,9 +94,6 @@ case class Tree(
       writeBlobToRepo: (String) => (String, String) => Unit
   ): Unit = {
     trees.map(_.createAllFiles(writeBlobToRepo))
-    //TODO
-    // val writeBlobToRepo = (nameBlob: String, content: String) =>
-    //   FilesIO.write(s"${projectDir}${this.name}$nameBlob", content)
     blobs.map(_.writeBlob(writeBlobToRepo(name)))
   }
 }
@@ -118,11 +104,7 @@ object Tree {
       blobContent: (String) => (String),
       getTreeContent: (String) => (Node)
   ): Tree = {
-    // TODO old val xml = FilesIO.loadXml(s"${pathTreeDir}${hash}")
     val xml = getTreeContent(hash)
-    // TODO DELETE ME
-    // val blobContent = (blobHash: String) =>
-    //   FilesIO.getContent(s"${pathBlobDir}$blobHash")
     getTree(xml, blobContent, getTreeContent)
   }
 
@@ -142,9 +124,6 @@ object Tree {
           )
         })
         .toArray
-    // TODO delete me
-    // val blobContent = (blobHash: String) =>
-    //   FilesIO.getContent(s"${pathBlobDir}$blobHash")
     val blobs =
       (xmlContent \ "blobs" \ "blob")
         .map(
@@ -162,7 +141,6 @@ object Tree {
       fileContent: (String) => (String) => String
   ): Tree = {
     val explicitedFiles: Array[Array[String]] = files
-    //TODO old .flatMap(f => FilesIO.getAllFiles(new File(f)))
       .flatMap(f => allFiles(new File(f)))
       .map(file => {
         file
@@ -187,9 +165,6 @@ object Tree {
   ): Tree = {
     val (blobs, trees) = files.partition(pathAsArray => pathAsArray.length == 1)
 
-    //TODO delete me
-    // val fileContent = (blobHash: String) =>
-    //   FilesIO.getContent(s"${projectDir}${currentName}$blobHash")
     val newBlobsArray = blobs
       .map(blob => {
         Blob.getBlob(
