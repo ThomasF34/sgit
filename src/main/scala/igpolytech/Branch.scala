@@ -2,7 +2,10 @@ package igpolytech
 
 case class Branch(name: String, commitHash: String) {
   def getLastCommit(commitsPath: String): Option[Commit] = {
-    if (commitHash != "") Some(Commit.getCommit(commitHash, commitsPath))
+    //TODO DELETE ME
+    val commitContent = (hash: String) =>
+      FilesIO.loadXml(s"${commitsPath}${hash}")
+    if (commitHash != "") Some(Commit.getCommit(commitHash, commitContent))
     else None
   }
 

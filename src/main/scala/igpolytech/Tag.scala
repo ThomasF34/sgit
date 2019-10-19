@@ -5,8 +5,15 @@ case class Tag(name: String, hash: String) {
     FilesIO.write(s"${tagsPath}$name", hash)
   }
 
-  def getCommit(commitsPath: String): Option[Commit] =
-    Commit.getCommitOption(hash, commitsPath)
+  def getCommit(commitsPath: String): Option[Commit] = {
+    //TODO DELETE ME
+    val commitContent = (hash: String) =>
+      FilesIO.loadXml(s"${commitsPath}${hash}")
+    val commitExists = (hash: String) =>
+      FilesIO.fileExists(s"${commitsPath}$hash")
+
+    Commit.getCommitOption(hash, commitContent, commitExists)
+  }
 
 }
 

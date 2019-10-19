@@ -33,58 +33,62 @@ case class Commit(
     </Commit>
   }
 
-  def save(commitsDirPath: String): Unit = {
-    FilesIO.saveXml(this.toXml(), s"${commitsDirPath}${hash}")
+  def save(
+      saveCommitToRepo: (String, Node) => Unit
+  ): Unit = {
+    saveCommitToRepo(hash, toXml())
+    // TODO OLD FilesIO.saveXml(this.toXml(), s"${commitsDirPath}${hash}")
   }
 
   def getDetails(
       withStats: Boolean,
       withDiff: Boolean,
-      pathTreeDir: String,
-      pathBlobDir: String,
-      commitsDir: String
+      blobContent: (String) => String,
+      treeContent: (String) => Node,
+      commitContent: (String) => Node
   ): String = {
     val base =
       s"commit $hash\nAuthor: $author\nDate: ${timestamp.toString()}\n$text\n"
 
     (withStats, withDiff) match {
       case (true, true) =>
-        s"${base}Stats:\n${getStats(pathTreeDir, pathBlobDir, commitsDir)
+        s"${base}Stats:\n${getStats(blobContent, treeContent, commitContent)
           .mkString("\n")}\n\nDiff:\n${getDetailedDiff(
-          pathTreeDir,
-          pathBlobDir,
-          commitsDir
+          blobContent,
+          treeContent,
+          commitContent
         ).mkString("\n")}\n===="
       case (true, false) =>
-        s"${base}Stats:\n${getStats(pathTreeDir, pathBlobDir, commitsDir).mkString("\n")}\n===="
+        s"${base}Stats:\n${getStats(blobContent, treeContent, commitContent)
+          .mkString("\n")}\n===="
       case (false, true) =>
         s"${base}Diff:\n${getDetailedDiff(
-          pathTreeDir,
-          pathBlobDir,
-          commitsDir
+          blobContent,
+          treeContent,
+          commitContent
         ).mkString("\n")}\n===="
       case (false, false) => s"$base\n===="
     }
   }
 
   private def getDiffWithParent(
-      pathTreeDir: String,
-      pathBlobDir: String,
-      commitsDir: String
+      blobContent: (String) => String,
+      treeContent: (String) => Node,
+      commitContent: (String) => Node
   ): Array[Diff] = {
     if (parentHash != "") {
-      //TODO DELETE ME
-      val blobContent = (blobHash: String) =>
-        FilesIO.getContent(s"${pathBlobDir}$blobHash")
-      val treeContent = (treeHash: String) =>
-        FilesIO.loadXml(s"${pathTreeDir}$treeHash")
+      //TODO
+      // val blobContent = (blobHash: String) =>
+      //   FilesIO.getContent(s"${pathBlobDir}$blobHash")
+      // val treeContent = (treeHash: String) =>
+      //   FilesIO.loadXml(s"${pathTreeDir}$treeHash")
       val tree = Tree.getTree(
         treeHash,
         blobContent,
         treeContent
       )
       val parentTree = Tree.getTree(
-        Commit.getCommit(parentHash, commitsDir).treeHash,
+        Commit.getCommit(parentHash, commitContent).treeHash,
         blobContent,
         treeContent
       )
@@ -95,59 +99,84 @@ case class Commit(
   }
 
   private def getDetailedDiff(
-      pathTreeDir: String,
-      pathBlobDir: String,
-      commitsDir: String
+      blobContent: (String) => String,
+      treeContent: (String) => Node,
+      commitContent: (String) => Node
   ): Array[String] = {
     val diff =
-      getDiffWithParent(pathTreeDir, pathBlobDir, commitsDir).map(_.getDetails)
+      getDiffWithParent(
+        blobContent,
+        treeContent,
+        commitContent
+      ).map(_.getDetails)
     if (diff.isEmpty) Array("-- No diff --")
     else diff
   }
   private def getStats(
-      pathTreeDir: String,
-      pathBlobDir: String,
-      commitsDir: String
+      blobContent: (String) => String,
+      treeContent: (String) => Node,
+      commitContent: (String) => Node
   ): Array[String] = {
     val stats =
-      getDiffWithParent(pathTreeDir, pathBlobDir, commitsDir).map(_.getStats)
+      getDiffWithParent(
+        blobContent,
+        treeContent,
+        commitContent
+      ).map(_.getStats)
     if (stats.isEmpty) Array("-- No diff --")
     else stats
   }
 
-  def getParentCommit(commitsPath: String): Option[Commit] = {
-    if (parentHash != "") Commit.getCommitOption(parentHash, commitsPath)
+  def getParentCommit(
+      commitContent: (String) => Node,
+      commitExists: (String) => Boolean
+  ): Option[Commit] = {
+    if (parentHash != "")
+      Commit.getCommitOption(
+        parentHash,
+        commitContent,
+        commitExists
+      )
     else None
   }
 
-  def hasCommitAsAncestor(commit: Commit, commitsPath: String): Boolean = {
-    getParentCommit(commitsPath) match {
+  def hasCommitAsAncestor(
+      commit: Commit,
+      commitContent: (String) => Node,
+      commitExists: (String) => Boolean
+  ): Boolean = {
+    getParentCommit(commitContent, commitExists) match {
       case Some(parentCommit) =>
         if (parentCommit.equals(commit)) {
           true
-        } else parentCommit.hasCommitAsAncestor(commit, commitsPath)
+        } else
+          parentCommit.hasCommitAsAncestor(
+            commit,
+            commitContent,
+            commitExists
+          )
       case None => false
     }
   }
 }
 
 object Commit {
-  def getCommitOption(hash: String, commitsDirPath: String): Option[Commit] = {
-    if (Commit.exists(hash, commitsDirPath))
-      Some(getCommit(hash, commitsDirPath))
+  def getCommitOption(
+      hash: String,
+      commitContent: (String) => Node,
+      commitExists: (String) => Boolean
+  ): Option[Commit] = {
+    if (Commit.exists(hash, commitExists))
+      Some(getCommit(hash, commitContent))
     else None
   }
-  def getCommit(hash: String, commitsDirPath: String): Commit = {
-    val xml = FilesIO.loadXml(s"${commitsDirPath}${hash}")
-    getCommit(xml)
-  }
-
-  def exists(hash: String, commitsDirPath: String): Boolean =
-    FilesIO.fileExists(s"${commitsDirPath}$hash")
 
   def getCommit(
-      xmlContent: Node
+      hash: String,
+      commitContent: (String) => Node
   ): Commit = {
+    val xmlContent = commitContent(hash)
+    //TODO OLD FilesIO.loadXml(s"${commitsDirPath}${hash}")
     val text = (xmlContent \ "text").text
     val parentHash = (xmlContent \ "parent").text
     val author = (xmlContent \ "author").text
@@ -156,20 +185,33 @@ object Commit {
     new Commit(treeHash, parentHash, text, author, timestamp)
   }
 
+  def exists(
+      hash: String,
+      commitExists: (String) => Boolean
+  ): Boolean =
+    commitExists(hash)
+  //TODO OLD  FilesIO.fileExists(s"${commitsDirPath}$hash")
+
   def getAncestorCommit(
       firstCommit: Commit,
       secondCommit: Commit,
-      commitsPath: String
+      commitContent: (String) => Node,
+      commitExists: (String) => Boolean
   ): Option[Commit] = {
-    secondCommit.getParentCommit(commitsPath) match {
+    secondCommit.getParentCommit(commitContent, commitExists) match {
       case Some(parentCommit) =>
-        if (firstCommit.hasCommitAsAncestor(parentCommit, commitsPath))
+        if (firstCommit.hasCommitAsAncestor(
+              parentCommit,
+              commitContent,
+              commitExists
+            ))
           Some(parentCommit)
         else
           getAncestorCommit(
             firstCommit,
             parentCommit,
-            commitsPath
+            commitContent,
+            commitExists
           )
       case None => None
     }

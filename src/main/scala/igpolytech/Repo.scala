@@ -20,11 +20,14 @@ case class Repo(repoDir: String) {
   }
 
   def getHeadStatus(): String = {
+    //TODO DELETE ME
+    val commitContent = (hash: String) =>
+      FilesIO.loadXml(s"${commitsPath}${hash}")
     head.mode match {
       case "branch" => s"You're on branch ${head.content}"
       case "detached" =>
         s"${Console.RED}${Console.BOLD}!! CAREFUL !! You're on detached mode !${Console.RESET}\nThe commit title you're on is '${Console.BOLD}${Commit
-          .getCommit(head.content, commitsPath)
+          .getCommit(head.content, commitContent)
           .title}${Console.RESET}'"
     }
   }
@@ -166,8 +169,12 @@ case class Repo(repoDir: String) {
         stage: Tree,
         lastCommitHash: String
     ): String = {
+      //TODO DELETE ME
+      val saveCommitToRepo = (hash: String, xml: Node) =>
+        FilesIO.saveXml(xml, s"${commitsPath}${hash}")
+
       val commit = Commit(stage.hash, lastCommitHash, text, author)
-      commit.save(commitsPath)
+      commit.save(saveCommitToRepo)
       setLastCommit(commit.hash)
       s"Change commited : ${commit.title}"
     }
@@ -290,20 +297,35 @@ case class Repo(repoDir: String) {
   }
 
   def log(withStats: Boolean, withDiff: Boolean): String = {
+    //TODO Delete me
+    val blobContent = (blobHash: String) =>
+      FilesIO.getContent(s"${blobsPath}$blobHash")
+    val treeContent = (treeHash: String) =>
+      FilesIO.loadXml(s"${treesPath}$treeHash")
+    //TODO DELETE ME
+    val commitContent = (hash: String) =>
+      FilesIO.loadXml(s"${commitsPath}${hash}")
+
     def loop(commit: Commit, detailList: Array[String]): Array[String] = {
       if (commit.parentHash == "")
         detailList :+ commit.getDetails(
           withStats,
           withDiff,
-          treesPath,
-          blobsPath,
-          commitsPath
+          blobContent,
+          treeContent,
+          commitContent
         )
       else
         loop(
-          Commit.getCommit(commit.parentHash, commitsPath),
+          Commit.getCommit(commit.parentHash, commitContent),
           detailList :+ commit
-            .getDetails(withStats, withDiff, treesPath, blobsPath, commitsPath)
+            .getDetails(
+              withStats,
+              withDiff,
+              blobContent,
+              treeContent,
+              commitContent
+            )
         )
     }
 
@@ -326,6 +348,11 @@ case class Repo(repoDir: String) {
       FilesIO.getContent(s"${blobsPath}${blobHash}")
     val treeContent = (treeHash: String) =>
       FilesIO.loadXml(s"${treesPath}$treeHash")
+    val commitContent = (hash: String) =>
+      FilesIO.loadXml(s"${commitsPath}${hash}")
+    val commitExists = (hash: String) =>
+      FilesIO.fileExists(s"${commitsPath}$hash")
+
     //First checking if there's anything modified
     getStage() match {
       case Some(stage) => {
@@ -343,7 +370,8 @@ case class Repo(repoDir: String) {
               )
               .isEmpty && Diff.fromTrees(lastCommitTree, stage).isEmpty) {
           //Only then we checkout
-          val toCommitOption = Commit.getCommitOption(to, commitsPath)
+          val toCommitOption =
+            Commit.getCommitOption(to, commitContent, commitExists)
           val commitWithHeadMode = toCommitOption
             .map(commit => (commit, "detached"))
             .orElse(

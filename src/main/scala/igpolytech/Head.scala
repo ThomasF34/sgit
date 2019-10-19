@@ -35,6 +35,9 @@ case class Head(mode: String, content: String) {
       branchesPath: String,
       commitsPath: String
   ): Option[Commit] = {
+    //TODO DELETE ME
+    val commitContent = (hash: String) =>
+      FilesIO.loadXml(s"${commitsPath}${hash}")
     mode match {
       case "branch" =>
         Branch
@@ -42,7 +45,7 @@ case class Head(mode: String, content: String) {
           .getLastCommit(commitsPath)
       case "detached" => {
         if (content == "") None
-        else Some(Commit.getCommit(content, commitsPath))
+        else Some(Commit.getCommit(content, commitContent))
       }
     }
   }

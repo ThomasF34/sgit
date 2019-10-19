@@ -7,8 +7,19 @@ object Merge {
       secondCommit: Commit,
       commitsPath: String
   ) = {
+    //TODO DELETE ME
+    val commitContent = (hash: String) =>
+      FilesIO.loadXml(s"${commitsPath}${hash}")
+    val commitExists = (hash: String) =>
+      FilesIO.fileExists(s"${commitsPath}$hash")
+
     val ancestorCommit =
-      Commit.getAncestorCommit(firstCommit, secondCommit, commitsPath)
+      Commit.getAncestorCommit(
+        firstCommit,
+        secondCommit,
+        commitContent,
+        commitExists
+      )
 
     val new1 = "Y\nA\nA\nB"
     val common = "Y\nY\nY\nY\nY\nA\nA\nK\nB"
