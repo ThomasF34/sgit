@@ -1,6 +1,5 @@
 package igpolytech
 import scopt.OParser
-import java.io.File
 
 case class Config(
     mode: String = "",

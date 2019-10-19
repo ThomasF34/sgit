@@ -1,8 +1,6 @@
 package igpolytech
-import java.security.MessageDigest
 import org.scalatest._
 import org.scalatest.Matchers
-import scala.xml.Node
 import java.io.File
 
 class TreeTest extends FunSpec with Matchers {

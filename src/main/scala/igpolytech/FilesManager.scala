@@ -6,7 +6,6 @@ import java.io.BufferedReader
 import scala.xml.Node
 import java.io.FileWriter
 import scala.io.Source
-import scala.io.BufferedSource
 
 object FilesIO {
 

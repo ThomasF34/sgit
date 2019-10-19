@@ -15,7 +15,7 @@ lazy val root = (project in file("."))
   )
 
 scalacOptions ++= Seq(
-  "-Ywarn-unused:params"
+  "-Xlint:unused"
 )
 
 assemblyOption in assembly := (assemblyOption in assembly).value
