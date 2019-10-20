@@ -10,11 +10,9 @@ To use `sgit` please make sure you have `sbt` installed. If not, [see here](http
 
 ## Installation
 
-> You can find the binary file in the Github release TODO
+> You can find the binary file in the [Github release](https://github.com/ThomasF34/sgit/releases/tag/v1.0.0)
 
-You can also execute the following command to build the binary file.
-
-You then have to add it to your PATH.
+You can also execute the following command to build the binary file. You then have to add `target/scala-2.13` to your PATH.
 
 ```
 sbt assembly
