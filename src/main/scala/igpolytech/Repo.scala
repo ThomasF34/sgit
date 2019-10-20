@@ -1,21 +1,22 @@
 package igpolytech
-import java.io.File
 import scala.xml.Node
 
 case class Repo(repoDir: String)(implicit ioManager: IOManager) {
-  val treesPath = s"${repoDir}${File.separator}trees${File.separator}"
-  val blobsPath = s"${repoDir}${File.separator}blobs${File.separator}"
-  val commitsPath = s"${repoDir}${File.separator}commits${File.separator}"
-  val branchesPath = s"${repoDir}${File.separator}branches${File.separator}"
-  val tagsPath = s"${repoDir}${File.separator}tags${File.separator}"
+  val treesPath = s"${repoDir}${ioManager.separator}trees${ioManager.separator}"
+  val blobsPath = s"${repoDir}${ioManager.separator}blobs${ioManager.separator}"
+  val commitsPath =
+    s"${repoDir}${ioManager.separator}commits${ioManager.separator}"
+  val branchesPath =
+    s"${repoDir}${ioManager.separator}branches${ioManager.separator}"
+  val tagsPath = s"${repoDir}${ioManager.separator}tags${ioManager.separator}"
 
-  val headDir = s"${repoDir}${File.separator}"
+  val headDir = s"${repoDir}${ioManager.separator}"
   val headFile = "HEAD"
 
-  val stageDir = s"${repoDir}${File.separator}"
+  val stageDir = s"${repoDir}${ioManager.separator}"
   val stageFile = "STAGE"
 
-  val commitMessageDir = s"${repoDir}${File.separator}"
+  val commitMessageDir = s"${repoDir}${ioManager.separator}"
   val commitMessageFile = "CommitMessage"
 
   val projectDir = repoDir match {
@@ -81,7 +82,7 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
   }
 
   private def getStaggedStatus(): String = {
-    val hash = ioManager.getHash(s"${repoDir}${File.separator}STAGE")
+    val hash = ioManager.getHash(s"${stageDir}$stageFile")
     hash match {
       case None => "-- Nothing in stage --"
       case Some(treeHash) => {
@@ -139,12 +140,11 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
   }
 
   def add(files: Array[String]): String = {
-    val allFiles = (f: File) => ioManager.getAllFiles(f)
 
     val volatileTree: Tree = Tree.createFromList(
       files.filterNot(_.contains(".sgit")),
       projectDir,
-      allFiles,
+      ioManager.getAllFiles(_),
       fileContent,
       ioManager.fileExists
     )
@@ -224,7 +224,7 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
   }
 
   def getStage(): Option[Tree] = {
-    val stageHashOption = ioManager.getHash(s"${repoDir}${File.separator}STAGE")
+    val stageHashOption = ioManager.getHash(s"${stageDir}$stageFile")
     stageHashOption.map(
       stageHash =>
         Tree.getTree(
@@ -490,7 +490,7 @@ object Repo {
   implicit val ioManager: IOManager = IOManager();
 
   def init(path: String): String = {
-    val sgitDir = s"${path}${File.separator}.sgit${File.separator}"
+    val sgitDir = s"${path}${ioManager.separator}.sgit${ioManager.separator}"
     val dirs: Array[String] = Array(
       s"${sgitDir}tags",
       s"${sgitDir}commits",
@@ -503,10 +503,13 @@ object Repo {
       try {
         ioManager.createDirectories(dirs);
         ioManager.createFiles(files);
-        ioManager.write(s"${sgitDir}branches${File.separator}")("master", "")
+        ioManager.write(s"${sgitDir}branches${ioManager.separator}")(
+          "master",
+          ""
+        )
 
         val initialBranchExists =
-          ioManager.fileExists(s"${sgitDir}branches${File.separator}")(
+          ioManager.fileExists(s"${sgitDir}branches${ioManager.separator}")(
             _: String
           )
         val initialSaveHeadToRepo = (xml: Node) =>

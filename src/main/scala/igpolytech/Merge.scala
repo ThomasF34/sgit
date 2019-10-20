@@ -46,8 +46,10 @@ object Merge {
           else Some(change2)
       }
 
-    if (toBeMergedListOption.contains(None)) System.exit(1)
-    else toBeMergedListOption.flatten.foreach(println)
+    if (toBeMergedListOption.contains(None)) {
+      println("Conflict")
+      System.exit(1)
+    } else toBeMergedListOption.flatten.foreach(println)
 
     ancestorCommit.toString()
   }
