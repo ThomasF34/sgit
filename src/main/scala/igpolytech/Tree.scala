@@ -159,7 +159,7 @@ object Tree {
     * The later should describe the path of a file. Each path should begin from the repodir
     * and each element represent a dir. The last element is the name of the file to add.
     */
-  private def createTree(
+  def createTree(
       files: Array[Array[String]],
       currentName: String,
       projectDir: String,

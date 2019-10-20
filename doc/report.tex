@@ -256,6 +256,19 @@ After a great refactoring at the end of the project, I tried to change my point 
 % After spending quite sometime chasing bug, it was obvious to me that unitary tests were much more important than integration one
 
 %TODO with examples
+
+\begin{lstlisting}[language=scala]
+  it("should return None if no last commit") {
+    val branch = Branch("master", "")
+    val fakeCommitRepoDir = mutable.Map[String, Node]()
+    val mockCommitContent = (hash: String) => fakeCommitRepoDir(hash)
+
+    val res = branch.getLastCommit(mockCommitContent)
+
+    res shouldBe None
+  }
+\end{lstlisting}
+
 \section{Post-mortem}
 If some say that \textit{with great powers come great responsibilies}, I would say that \textit{with great projects come great lessons}
 
