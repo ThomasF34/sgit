@@ -36,7 +36,7 @@
 \definecolor{commentcode}{HTML}{999999}
 \definecolor{backcolour}{HTML}{002835}
 
-\lstdefinestyle{kuzzleCore}{
+\lstdefinestyle{darkStyle}{
     backgroundcolor=\color{backcolour},
     commentstyle=\color{commentcode},
     keywordstyle=\color{magenta},
@@ -55,28 +55,8 @@
     tabsize=2
 }
 
-\lstset{style=kuzzleCore}
+\lstset{style=darkStyle}
 
-\lstdefinelanguage{Javascript}{
-  keywords={break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, this, throw, try, typeof, var, void, while, with},
-  morecomment=[l]{//},
-  morecomment=[s]{/*}{*/},
-  morestring=[b]',
-  morestring=[b]",
-  sensitive=true,
-  inputencoding=utf8,
-  extendedchars=true,
-  literate={á}{{\'a}}1 {ã}{{\~a}}1 {é}{{\'e}}1
-}
-
-\lstdefinelanguage{Gherkin}{
-  keywords={When, Then, Given, And},
-  ndkeywords={Feature, Scenario},
-  sensitive=false,
-  comment=[l]{\#},
-  morestring=[b]',
-  morestring=[b]"
-}
 \lstdefinelanguage{scala}{
   morekeywords={%
           abstract,case,catch,class,def,do,else,extends,%
@@ -154,7 +134,7 @@ Here is a list of existing classes :
 \end{itemize}
 \end{multicols}
 
-Theses objects are using High Order Functions in order to gain access to the content they need. For example we give a function called \textit{commitContent} to the Commit object so it can access some commit's informations. Hence, every function that needs to have a commit information respects Referencial Transparency with this function injection.
+Theses objects are using High Order Functions in order to gain access to the content they need. For example we give a function called \textit{commitContent} to the Commit object so it can access some commit's informations. Hence, every function that needs to have a commit information respects Referential Transparency with this function injection.
 The Repo instance is responsible for this function injection. It is using IOManager's function to let other object access file's content, while hiding its origin to the aforementioned object.
 
 \begin{figure}[h!]
@@ -180,8 +160,16 @@ Also, I used currying in order to specialize theses functions we are giving to o
 
 With these functions, the Blob instance (to which we are gonna inject \textit{blobContent}) will only be able to access blob content while Tag instance will only be able to access tag content.
 
-\subsection{File organigation}
+\subsection{File organization}
 
+For the sake of readability, I decided to fill a \textit{.sgit} directory with all the repository informations. All objects are sorted in a sub directory corresponding to their type.\\
+
+Here is the organization of this file :
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.5\linewidth]{img/fileOrganisation.png}
+  \caption{File organization in \textit{.sgit} directory}
+\end{figure}
 
 \subsection{Git copycat}
 
@@ -190,7 +178,8 @@ In order to reproduce most of Git function I had to implement some interesting a
 \subsubsection{Diff algorithm}
 In order to obtain the diff between two files I implemented an algorithm based on the Longest Common Sequence (LCS) between two collections (here two collection of strings, where each element represents a line of the compared file)
 
-% TODO %
+The idea behind this algorithm is to fill a matrix based on the content of both list. Then, once the matrix is filled, we start from the last element of the matrix and go backward to return at the beginning. The way we are using to come back to the first element will indicate wether the content had been added or removed (or is common between both list). You can retrieve the algorithm implementation in the \href{https://github.com/ThomasF34/sgit/blob/master/src/main/scala/igpolytech/Diff.scala}{\textit{Diff.scala} file \includegraphics[height=\fontcharht\font`\l]{img/github.png}}\footnote{\href{https://github.com/ThomasF34/sgit/blob/master/src/main/scala/igpolytech/Diff.scala}{\ul{https://github.com/ThomasF34/sgit/blob/master/src/main/scala/igpolytech/Diff.scala}}}
+
 \subsubsection{Merge algorithm}
 To compute the merge algorithm I had to obtain the LCS between three files. The first and the second one are the files on each branch we want to merge and the last one is the file on the common ancestor commit.
 
@@ -220,25 +209,14 @@ Though this architecture has some drawbacks, it also have major advantages !\\
 First, all the \textbf{IO is grouped} in Repo and IOManager (and Parser for interface displaying) znd the usage of HOF makes all the other classes (Commit, Blob, Tree, etc.) \textbf{pure and respecting RT}.
 Secondly, the currying usage is great to \textbf{separate each classes' concern and reduce coupling}.
 Then, for all the getters functions, the usage of \textit{lazy val} is useful to \textbf{increase performance}.
-Lastly, \textbf{readability is highly increased} with the existence of abstract data structures (Commit, Tree, Blob...) and of \textit{.sgit} directory organigation (coupled with XML format)
-
-% IO is grouped on Repo and IOManager (and Parser for interface displaying)
-% Usage of hof to respect RT in all other instanciable object (Commit etc.)
-% Usage of currying to limit action of instance
-% Usage of lazy val for getters
-% Readability with all abstraction
-% File readability in .sgit directory
+Lastly, \textbf{readability is highly increased} with the existence of abstract data structures (Commit, Tree, Blob...) and of \textit{.sgit} directory organization (coupled with XML format)
 
 \subsection{Cons}
 Obviously these choices cannot be 100\% perfect so they come with some drawbacks.\\
 
 First, Repo is the brain of all actions and it results in a \textbf{complex object} (around 500 lines of code).
 Secondly, in order to limit objects' actions, I had to \textbf{declare a lot of variables} (at the top of \href{https://github.com/ThomasF34/sgit/blob/master/src/main/scala/igpolytech/Repo.scala}{\textit{Repo.scala} file \includegraphics[height=\fontcharht\font`\l]{img/github.png}}\footnote{\href{https://github.com/ThomasF34/sgit/blob/master/src/main/scala/igpolytech/Repo.scala}{\ul{https://github.com/ThomasF34/sgit/blob/master/src/main/scala/igpolytech/Repo.scala}}}) - which doesn't not improve my first point...
-Lastly, usage of HOF \textbf{increase the number of parameters} given to object's function and, though it helps reducing cloupling and limiting object's scope of action, it can \textbf{become a weird enumeration when calling an object's function}
-
-%Lot of work with all instanciation
-% Repo is a complex object
-% Lot of variable to define in Repo to limitate objects actions
+Lastly, usage of HOF \textbf{increase the number of parameters} given to object's function and, though it helps reducing coupling and limiting object's scope of action, it can \textbf{become a weird enumeration when calling an object's function}
 
 \section{Tests}
 \subsection{Naïve approach}
@@ -246,18 +224,12 @@ At the beginning of the project I've been mainly \textbf{focused on integration 
 
 After a great refactoring at the end of the project, I tried to change my point of view on tests and tried to \textbf{focus more on individuals, unitary tests}
 
-% Mainly focused on integration test to see if all use cases were correctly made and all users actions would lead to a successful answer to their needs
-
-% Quickly saw that it was not precise enough to easily catch a problem when it occurs
-
-% After a great refactoring at the end of the project, i changed my point of view on tests and tried more to focus on individuals, unitary tests
-
 \subsection{I-understood-the-mistake approach}
-% After spending quite sometime chasing bug, it was obvious to me that unitary tests were much more important than integration one
 
-%TODO with examples
+After my refactoring step, I coded a lot of unitary tests to test each functionality in object.
+Here you can find an example of test for the \textit{getLastCommit} function that returns an Option of Commit from a Branch.
 
-\begin{lstlisting}[language=scala]
+\begin{lstlisting}[language=scala, caption=Unitary test of \textit{getLastCommit}]
   it("should return None if no last commit") {
     val branch = Branch("master", "")
     val fakeCommitRepoDir = mutable.Map[String, Node]()
@@ -269,15 +241,17 @@ After a great refactoring at the end of the project, I tried to change my point 
   }
 \end{lstlisting}
 
+I also kept the integration tests that I previously wrote, though I did not get enough time to transform them with a mock of \textit{IOManager}
+
 \section{Post-mortem}
-If some say that \textit{with great powers come great responsibilies}, I would say that \textit{with great projects come great lessons}
+If some say that \textit{with great powers come great responsibilities}, I would say that \textit{with great projects come great lessons}
 
 \subsection{Teamwork has a lot of benefits}
-Though this project was individual, I spent a lot of time in groups talking about architecture, algorithms, data scrutures and all. This dynamics created by teamwork is really important and help us, individually, keep a constant fresh eye on our work. Plus, it can really increase the quality of the work we produced - the dynamic we created with Yannick Mayeur and Lucas Gonçalves helped a lot for our respective projects, though the aim of it was trying to find a counter-example to prove the weakness in each others works
+Though this project was individual, I spent a lot of time in groups talking about architecture, algorithms, data structures and all. This dynamics created by teamwork is really important and help us, individually, keep a constant fresh eye on our work. Plus, it can really increase the quality of the work we produced - the dynamic we created with Yannick Mayeur and Lucas Gonçalves helped a lot for our respective projects, though the aim of it was trying to find a counter-example to prove the weakness in each others works
 
 \subsection{Testability is important}
 This project also changed the vision I had on testability. In fact, it was really important to test but I had placed tests at the end of a project's workflow. I realized it was really something to think about from the very beginning of a project. During the late refactoring I did on the code, I changed IOManager to make it mockable and it changed a lot of thing, opened new possibilities of tests, that would have increased the quality of my project if thought from the beginning.
 
 \subsection{Dev tools can be a great guiding light}
-Lastly, the great lesson I learned during this project is that the time spent setting up dev tools (Sonarqube, Travis etc.) is 100\% worth it. During all the living cycle of the project I realized it was a great and mostly trustful guiding light that helped me to keep in mind that the quality of a project is a constant and miticulous work
+Lastly, the great lesson I learned during this project is that the time spent setting up dev tools (SonarQube, Travis etc.) is 100\% worth it. During all the living cycle of the project I realized it was a great and mostly trustful guiding light that helped me to keep in mind that the quality of a project is a constant and meticulous work
 \end{document}
