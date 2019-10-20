@@ -20,7 +20,7 @@ object Parser extends App {
     import builder._
     OParser.sequence(
       programName("sgit"),
-      head("sgit", "1.x"),
+      head("sgit", "1.0.0"),
       help("help")
         .text("Here is the usage of sgit"),
       cmd("init")

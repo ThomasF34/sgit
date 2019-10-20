@@ -2,7 +2,7 @@ import Dependencies._
 import sbtassembly.AssemblyPlugin.defaultUniversalScript
 
 ThisBuild / scalaVersion := "2.13.0"
-ThisBuild / version := "0.1.0"
+ThisBuild / version := "1.0.0"
 ThisBuild / organization := "fr.igpolytech"
 ThisBuild / organizationName := "igpolytech"
 

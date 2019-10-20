@@ -465,7 +465,7 @@ case class Repo(repoDir: String)(implicit ioManager: IOManager) {
   def merge(branchName: String): String = {
     if (head.mode != "branch") "You must be on a branch to merge a branch"
     Branch.getBranchOption(branchName, branchExists, branchContent) match {
-      case None => "Sorry, given branch was not founded"
+      case None => "Sorry, given branch was not found"
       case Some(branch) =>
         (branch.getLastCommit(commitContent), getLastCommit()) match {
           case (Some(branchCommit), Some(currentCommit)) =>
