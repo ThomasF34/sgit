@@ -136,7 +136,7 @@ The architecture of sgit is quite explicit and can be seen as a simple flow.
 
 Everything begins within the \textbf{Parser} that will take the given command, initiate the \textbf{Repo} instance and ask it to execute the wanted action. It will then load all the needed the content from the \textbf{IOManager}, the HQ of File management and compute the result.
 
-In order to achieve this goal, the Repo uses an abstraction of the object it manipulates. Hence, it exists several \textit{case classes} that will help readibility and separate each other's concerns.\\
+In order to achieve this goal, the Repo uses an abstraction of the objects it manipulates. Hence, it exists several \textit{case classes} that will help readability and separate each other's concerns.\\
 
 Here is a list of existing classes :
 \begin{multicols}{3}
@@ -154,7 +154,7 @@ Here is a list of existing classes :
 \end{itemize}
 \end{multicols}
 
-Theses objects are using High Order Function in order to gain access to the content they need. For example we give a function called \textit{commitContent} to the Commit object so he can access some commit's information. Hence, every function that need to have a commit information respects Referencial Transparency with this function injection.
+Theses objects are using High Order Functions in order to gain access to the content they need. For example we give a function called \textit{commitContent} to the Commit object so it can access some commit's informations. Hence, every function that needs to have a commit information respects Referencial Transparency with this function injection.
 The Repo instance is responsible for this function injection. It is using IOManager's function to let other object access file's content, while hiding its origin to the aforementioned object.
 
 \begin{figure}[h!]
@@ -185,12 +185,10 @@ With these functions, the Blob instance (to which we are gonna inject \textit{bl
 
 \subsection{Git copycat}
 
-In order to reproduce most of Git function I had to implement some interesting algorithms.
-
-First for the \textit{diff} functions and then for the \textit{merge} one.
+In order to reproduce most of Git function I had to implement some interesting algorithms, firstly for the \textit{diff} functions and then for the \textit{merge} one.
 
 \subsubsection{Diff algorithm}
-In order to obtain the diff between two files I implemented an algorithm base on the Longest Common Sequence (LCS) between two collections (here two collection of string where each element represents a line of the compared file)
+In order to obtain the diff between two files I implemented an algorithm based on the Longest Common Sequence (LCS) between two collections (here two collection of strings, where each element represents a line of the compared file)
 
 % TODO %
 \subsubsection{Merge algorithm}
@@ -217,21 +215,37 @@ Here is an imaged example of what the align step will do. (You can retrieve the 
 \end{figure}
 
 \subsection{Pros}
+Though this architecture has some drawbacks, it also have major advantages !\\
+
+First, all the \textbf{IO is grouped} in Repo and IOManager (and Parser for interface displaying) znd the usage of HOF makes all the other classes (Commit, Blob, Tree, etc.) \textbf{pure and respecting RT}.
+Secondly, the currying usage is great to \textbf{separate each classes' concern and reduce coupling}.
+Then, for all the getters functions, the usage of \textit{lazy val} is useful to \textbf{increase performance}.
+Lastly, \textbf{readability is highly increased} with the existence of abstract data structures (Commit, Tree, Blob...) and of \textit{.sgit} directory organigation (coupled with XML format)
+
 % IO is grouped on Repo and IOManager (and Parser for interface displaying)
 % Usage of hof to respect RT in all other instanciable object (Commit etc.)
 % Usage of currying to limit action of instance
 % Usage of lazy val for getters
-
 % Readability with all abstraction
-% File readibility in .sgit directory
+% File readability in .sgit directory
 
 \subsection{Cons}
-% Lot of work with all instanciation
+Obviously these choices cannot be 100\% perfect so they come with some drawbacks.\\
+
+First, Repo is the brain of all actions and it results in a \textbf{complex object} (around 500 lines of code).
+Secondly, in order to limit objects' actions, I had to \textbf{declare a lot of variables} (at the top of \href{https://github.com/ThomasF34/sgit/blob/master/src/main/scala/igpolytech/Repo.scala}{\textit{Repo.scala} file \includegraphics[height=\fontcharht\font`\l]{img/github.png}}\footnote{\href{https://github.com/ThomasF34/sgit/blob/master/src/main/scala/igpolytech/Repo.scala}{\ul{https://github.com/ThomasF34/sgit/blob/master/src/main/scala/igpolytech/Repo.scala}}}) - which doesn't not improve my first point...
+Lastly, usage of HOF \textbf{increase the number of parameters} given to object's function and, though it helps reducing cloupling and limiting object's scope of action, it can \textbf{become a weird enumeration when calling an object's function}
+
+%Lot of work with all instanciation
 % Repo is a complex object
 % Lot of variable to define in Repo to limitate objects actions
 
 \section{Tests}
 \subsection{Naïve approach}
+At the beginning of the project I've been mainly \textbf{focused on integration tests} to see if all the use cases were correctly made and all users actions would lead to a successful answer to their needs. But I quickly saw that it was not precise enough because it only gives an overview of the problem when one occurs. Gradually, I began to see that the strategy of focusing on use cases and integration tests was not ideal.
+
+After a great refactoring at the end of the project, I tried to change my point of view on tests and tried to \textbf{focus more on individuals, unitary tests}
+
 % Mainly focused on integration test to see if all use cases were correctly made and all users actions would lead to a successful answer to their needs
 
 % Quickly saw that it was not precise enough to easily catch a problem when it occurs
@@ -241,9 +255,16 @@ Here is an imaged example of what the align step will do. (You can retrieve the 
 \subsection{I-understood-the-mistake approach}
 % After spending quite sometime chasing bug, it was obvious to me that unitary tests were much more important than integration one
 
+%TODO with examples
 \section{Post-mortem}
-\subsection{Teamwork has a lot of benefits}
-\subsection{Testability is important}
-\subsection{Dev tools can be a great guiding light}
+If some say that \textit{with great powers come great responsibilies}, I would say that \textit{with great projects come great lessons}
 
+\subsection{Teamwork has a lot of benefits}
+Though this project was individual, I spent a lot of time in groups talking about architecture, algorithms, data scrutures and all. This dynamics created by teamwork is really important and help us, individually, keep a constant fresh eye on our work. Plus, it can really increase the quality of the work we produced - the dynamic we created with Yannick Mayeur and Lucas Gonçalves helped a lot for our respective projects, though the aim of it was trying to find a counter-example to prove the weakness in each others works
+
+\subsection{Testability is important}
+This project also changed the vision I had on testability. In fact, it was really important to test but I had placed tests at the end of a project's workflow. I realized it was really something to think about from the very beginning of a project. During the late refactoring I did on the code, I changed IOManager to make it mockable and it changed a lot of thing, opened new possibilities of tests, that would have increased the quality of my project if thought from the beginning.
+
+\subsection{Dev tools can be a great guiding light}
+Lastly, the great lesson I learned during this project is that the time spent setting up dev tools (Sonarqube, Travis etc.) is 100\% worth it. During all the living cycle of the project I realized it was a great and mostly trustful guiding light that helped me to keep in mind that the quality of a project is a constant and miticulous work
 \end{document}
