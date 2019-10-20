@@ -128,19 +128,6 @@ class TagTest extends FunSpec with Matchers {
       res shouldBe "The head your repository does not point towards a commit. Please commit before creating a tag"
     }
 
-    it("should create tag with head content inside") {
-      pending
-      Repo.init(".")
-      val repo = Repo(".sgit")
-      repo.commit("toInfinityAndBeyond")
-      repo.setHead("detached", "abc")
-
-      val res = repo.createTag("superTag")
-
-      res shouldBe "Tag superTag created"
-      ioManager.getContent(repo.tagsPath)("superTag") shouldBe "test"
-    }
-
     it("should indicate no tags has been created") {
       Repo.init(".")
       val repo = Repo(".sgit")
