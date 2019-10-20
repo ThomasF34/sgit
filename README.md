@@ -41,6 +41,8 @@ You're now able to use `sgit`
 - [ ] rebase
 - [ ] rebase i
 
+*NB: Merge algorithm is implemented but is not linked to Parser. Merge command will show an example on three given contents (I decided to focus on refactoring the architecture instead)*
+
 ## Test
 
 You can run tests with the following command
